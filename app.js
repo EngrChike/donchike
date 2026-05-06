@@ -1,8 +1,19 @@
 // 1. YOUR SUPABASE CONNECTION (Fill these in!)
-const supabaseUrl = 'YOUR_SUPABASE_URL_HERE';
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// 1. YOUR SUPABASE CONNECTION
 
+// Put your address inside the first set of quotes
+
+const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co'; 
+
+
+// Put your long 'Anon Key' (from your Supabase dashboard) inside these quotes
+
+const supabaseKey = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI; 
+
+
+// This line uses the two pieces of info above to open the connection
+
+const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 // 2. DATA STORAGE (The app's temporary memory)
 let inventory = [];
 let customers = [];
