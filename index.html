@@ -12,96 +12,95 @@
         .gold-border { border-color: #D4AF37; }
         .gold-text { color: #D4AF37; }
         .gold-bg { background-color: #D4AF37; }
+        /* Custom scrollbar for a premium feel */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <header class="text-center mb-10">
         <h1 class="text-3xl font-bold gold-text tracking-widest uppercase">AkuDon Cosmetics</h1>
-        <p class="text-gray-500 text-sm">Executive Inventory & Sales Terminal</p>
+        <p class="text-gray-500 text-sm">Official Batch & Sales Ledger</p>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-zinc-900 p-4 rounded-xl border-t-4 gold-border shadow-lg">
-            <h3 class="text-xs text-gray-400 uppercase">Total Investment (₦)</h3>
+            <h3 class="text-xs text-gray-400 uppercase">Batch Value (₦)</h3>
             <p id="total-naira" class="text-xl font-bold">₦0</p>
         </div>
         <div class="bg-zinc-900 p-4 rounded-xl border-t-4 gold-border shadow-lg">
-            <h3 class="text-xs text-gray-400 uppercase">Total Investment (CFA)</h3>
+            <h3 class="text-xs text-gray-400 uppercase">Batch Value (CFA)</h3>
             <p id="total-cfa" class="text-xl font-bold">0 CFA</p>
         </div>
         <div class="bg-zinc-900 p-4 rounded-xl border-t-4 border-green-500 shadow-lg">
-            <h3 class="text-xs text-gray-400 uppercase">Expected Sales (CFA)</h3>
+            <h3 class="text-xs text-gray-400 uppercase">Expected Sales</h3>
             <p id="expected-cfa" class="text-xl font-bold text-green-500">0 CFA</p>
         </div>
         <div class="bg-zinc-900 p-4 rounded-xl border-t-4 border-red-500 shadow-lg">
-            <h3 class="text-xs text-gray-400 uppercase">Total Debt Owed</h3>
+            <h3 class="text-xs text-gray-400 uppercase">Outstanding Debt</h3>
             <p id="total-debt" class="text-xl font-bold text-red-500">0 CFA</p>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <div class="lg:col-span-4 space-y-8">
-            
+        <div class="lg:col-span-4 space-y-6">
             <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
-                <h2 class="text-lg font-bold gold-text mb-4 flex justify-between">
-                    <span>📦 Batch Management</span>
-                    <button onclick="clearProductForm()" class="text-xs text-gray-500">New</button>
-                </h2>
+                <h2 id="p-form-title" class="text-lg font-bold gold-text mb-4">📦 Stock & Batch Entry</h2>
                 <div class="space-y-3">
-                    <input type="text" id="p-batch" placeholder="Batch Name (e.g. MAY_2026)" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700 outline-none focus:ring-1 ring-yellow-600">
+                    <input type="text" id="p-batch" placeholder="Batch Name" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700 outline-none focus:ring-1 ring-yellow-600">
                     <input type="text" id="p-name" placeholder="Product Name" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="number" id="p-dozens" placeholder="Qty (Dozens)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
                         <input type="number" id="p-naira" placeholder="Price (₦)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="p-cfa" placeholder="Price (CFA)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                        <input type="number" id="p-cfa" placeholder="Cost (CFA)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
                         <input type="number" id="p-sell" placeholder="Selling (CFA)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
                     </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-bold py-3 rounded-lg hover:opacity-90 transition">SAVE TO BATCH</button>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-bold py-3 rounded-lg hover:opacity-90">SAVE PRODUCT</button>
                 </div>
             </section>
 
             <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
-                <h2 class="text-lg font-bold text-green-500 mb-4">🛒 Sales & Customer</h2>
+                <h2 class="text-lg font-bold text-green-500 mb-4">👤 Customer Transaction</h2>
                 <div class="space-y-3">
-                    <input type="text" id="c-name" placeholder="Customer Name" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    <input type="text" id="c-name" placeholder="Full Name" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
                     <input type="text" id="c-phone" placeholder="Phone Number" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
                     
-                    <div class="p-3 bg-black rounded-lg border border-dashed border-zinc-700">
-                        <input list="inventory-list" id="sale-item" placeholder="Select Product..." class="w-full bg-transparent mb-2 outline-none gold-text">
+                    <div class="p-3 bg-black rounded-lg border border-zinc-700">
+                        <input list="inventory-list" id="sale-item" placeholder="Select Product..." class="w-full bg-transparent mb-2 outline-none gold-text text-sm" onchange="autoFillSalePrice()">
                         <datalist id="inventory-list"></datalist>
                         <div class="flex gap-2">
-                            <input type="number" id="sale-qty" placeholder="Dozens" class="w-1/2 bg-zinc-800 p-2 rounded">
-                            <button onclick="addToQueue()" class="w-1/2 bg-zinc-700 font-bold rounded text-sm">+ Add Item</button>
+                            <input type="number" id="sale-qty" placeholder="Doz" class="w-1/3 bg-zinc-800 p-2 rounded text-sm">
+                            <input type="number" id="sale-price" placeholder="Price" class="w-1/3 bg-zinc-800 p-2 rounded text-sm">
+                            <button onclick="addToQueue()" class="w-1/3 bg-zinc-700 font-bold rounded text-xs">+ Add</button>
                         </div>
                     </div>
-
-                    <div id="sale-queue" class="text-sm space-y-1 py-2 text-gray-400"></div>
-
-                    <input type="number" id="c-paid" placeholder="Amount Paid (CFA)" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
-                    <button onclick="saveCustomer()" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">POST TRANSACTION</button>
+                    <div id="sale-queue" class="text-xs space-y-1 p-2 bg-zinc-950 rounded border border-zinc-800 min-h-[40px]"></div>
+                    <input type="number" id="c-paid" placeholder="Amount Paid Now (CFA)" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    <button onclick="saveCustomer()" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">POST SALE</button>
                 </div>
             </section>
         </div>
 
-        <div class="lg:col-span-8 space-y-8">
+        <div class="lg:col-span-8 space-y-6">
             <div class="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
-                    <h2 class="font-bold">Customer Ledger</h2>
+                <div class="p-4 bg-zinc-800/50 flex justify-between items-center">
+                    <h2 class="font-bold">Customer Ledger (Sales)</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-black text-gray-400">
                             <tr>
-                                <th class="p-4">Customer/Items</th>
+                                <th class="p-4">Customer</th>
+                                <th class="p-4">Items</th>
                                 <th class="p-4">Total</th>
                                 <th class="p-4">Paid</th>
                                 <th class="p-4">Balance</th>
-                                <th class="p-4">Last Update</th>
-                                <th class="p-4">Actions</th>
+                                <th class="p-4">Updated</th>
+                                <th class="p-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="customer-table"></tbody>
@@ -110,8 +109,8 @@
             </div>
 
             <div class="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                <div class="p-4 border-b border-zinc-800">
-                    <h2 class="font-bold">Inventory Status</h2>
+                <div class="p-4 bg-zinc-800/50">
+                    <h2 class="font-bold">Active Inventory</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
@@ -120,9 +119,9 @@
                                 <th class="p-4">Batch</th>
                                 <th class="p-4">Product</th>
                                 <th class="p-4">Stock</th>
-                                <th class="p-4">Naira Cost</th>
-                                <th class="p-4">CFA Selling</th>
-                                <th class="p-4">Action</th>
+                                <th class="p-4">Naira</th>
+                                <th class="p-4">CFA</th>
+                                <th class="p-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-table"></tbody>
