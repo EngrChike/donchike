@@ -17,7 +17,7 @@
         .stat-card p { margin: 0; font-size: 1.1rem; font-weight: bold; }
         .main-grid { display: flex; flex-direction: column; gap: 20px; }
         @media (min-width: 1024px) { .main-grid { flex-direction: row; align-items: flex-start; } }
-        .form-section { background: var(--card-bg); padding: 20px; border-radius: 16px; flex: 1; min-width: 300px; }
+        .form-section { background: var(--card-bg); padding: 20px; border-radius: 16px; flex: 1; min-width: 320px; }
         @media (min-width: 1024px) { .form-section { position: sticky; top: 10px; max-width: 400px; } }
         input { width: 100%; padding: 14px; margin-bottom: 12px; background: var(--input-bg); border: 1px solid #333; border-radius: 8px; color: white; font-size: 16px; box-sizing: border-box; }
         .btn-gold { background: var(--primary-gold); color: #000; font-weight: bold; padding: 16px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; font-size: 16px; }
@@ -26,24 +26,24 @@
         @media (min-width: 600px) { .table-header { flex-direction: row; justify-content: space-between; align-items: center; } }
         .search-bar { width: 100%; max-width: 300px; border: 1px solid var(--primary-gold); }
         .table-container { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 650px; font-size: 0.85rem; }
-        th { text-align: left; padding: 10px; color: var(--primary-gold); border-bottom: 2px solid #333; }
-        td { padding: 10px; border-bottom: 1px solid #2a2a2a; vertical-align: middle; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; font-size: 0.85rem; }
+        th { text-align: left; padding: 12px; color: var(--primary-gold); border-bottom: 2px solid #333; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #2a2a2a; vertical-align: middle; }
         .btn-edit { color: var(--primary-gold); background: none; border: 1px solid var(--primary-gold); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-del { color: var(--danger); background: none; border: 1px solid var(--danger); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .pending-box { background: #151515; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; border-left: 3px solid var(--primary-gold); min-height: 20px; }
+        .pending-box { background: #151515; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; border-left: 3px solid var(--primary-gold); min-height: 40px; }
     </style>
 </head>
 <body>
     <div class="header"><h1>AKUDON COSMETICS</h1></div>
     <div class="dashboard">
-        <div class="stat-card"><h3>Supply Cost</h3><p id="dash-naira">₦0</p></div>
-        <div class="stat-card"><h3>Exp. Revenue</h3><p id="dash-cfa" style="color:var(--success)">0 CFA</p></div>
-        <div class="stat-card"><h3>Total Debt</h3><p id="dash-debt" style="color:var(--danger)">0 CFA</p></div>
+        <div class="stat-card"><h3>Total Stock Cost</h3><p id="dash-naira">₦0</p></div>
+        <div class="stat-card"><h3>Expected Revenue</h3><p id="dash-cfa" style="color:var(--success)">0 CFA</p></div>
+        <div class="stat-card"><h3>Current Debt</h3><p id="dash-debt" style="color:var(--danger)">0 CFA</p></div>
     </div>
     <div class="main-grid">
         <div class="form-section">
-            <h2 id="p-title" style="color: var(--primary-gold); margin: 0 0 15px 0;">Stock Entry</h2>
+            <h2 id="p-title" style="color: var(--primary-gold); margin: 0 0 15px 0;">Inventory Manager</h2>
             <input type="text" id="p-batch" placeholder="Batch Name">
             <input type="text" id="p-name" placeholder="Product Name">
             <div style="display: flex; gap: 10px;">
@@ -53,34 +53,34 @@
             <input type="number" id="p-sell-cfa" placeholder="Selling Price (CFA)">
             <button class="btn-gold" onclick="saveProduct()">SAVE PRODUCT</button>
             <hr style="border: 0.5px solid #333; margin: 25px 0;">
-            <h2 id="c-title" style="color: var(--primary-gold); margin: 0 0 15px 0;">Transaction</h2>
+            <h2 id="c-title" style="color: var(--primary-gold); margin: 0 0 15px 0;">New Transaction</h2>
             <input type="text" id="c-name" placeholder="Customer Name">
             <input type="text" id="c-phone" placeholder="Phone Number">
             <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                <input list="product-list" id="item-select" placeholder="Search Product..." onchange="handleProductSelect()">
+                <input list="product-list" id="item-select" placeholder="Type Product Name..." onchange="handleProductSelect()">
                 <datalist id="product-list"></datalist>
                 <div style="display: flex; gap: 10px;">
                     <input type="number" id="item-qty" step="0.1" placeholder="Qty">
                     <input type="number" id="item-price" placeholder="Price">
                 </div>
-                <button class="btn-gold" style="background:#333; color:var(--primary-gold); padding:10px;" onclick="addItemToTransaction()">+ Add Item</button>
+                <button class="btn-gold" style="background:#333; color:var(--primary-gold); padding:10px;" onclick="addItemToTransaction()">+ Add to List</button>
             </div>
-            <div class="pending-box" id="pending-items">No items added.</div>
-            <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
-            <button class="btn-gold" style="background:var(--success); color:white;" onclick="saveCustomer()">CONFIRM SALE</button>
+            <div class="pending-box" id="pending-items">No items selected.</div>
+            <input type="number" id="c-paid" placeholder="Amount Paid Now (CFA)">
+            <button class="btn-gold" style="background:var(--success); color:white;" onclick="saveCustomer()">CONFIRM & POST SALE</button>
         </div>
         <div class="table-section">
-            <div class="table-header"><h2>Sales Ledger</h2><input type="text" id="ledger-search" class="search-bar" placeholder="Search..." oninput="renderUI()"></div>
+            <div class="table-header"><h2>Customer Ledger</h2><input type="text" id="ledger-search" class="search-bar" placeholder="Search Customer..." oninput="renderUI()"></div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Customer / Goods</th><th>Debt</th><th>Date</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Customer / Items</th><th>Debt (CFA)</th><th>Last Update</th><th>Actions</th></tr></thead>
                     <tbody id="ledger-body"></tbody>
                 </table>
             </div>
-            <h2 style="margin-top: 30px;">Inventory Status</h2>
+            <h2 style="margin-top: 40px;">Current Stock Status</h2>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Product Name</th><th>In Stock</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Product Name</th><th>Stock Level</th><th>Actions</th></tr></thead>
                     <tbody id="inventory-body"></tbody>
                 </table>
             </div>
