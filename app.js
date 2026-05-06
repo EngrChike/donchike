@@ -1,16 +1,11 @@
-// 1. YOUR SUPABASE CONNECTION (Fill these in!)
 // 1. YOUR SUPABASE CONNECTION
+const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI';
 
-// Put your address inside the first set of quotes
-const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co'; 
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI'; 
+// We wrap the client creation to ensure it is defined before use
+const _supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// CRITICAL: Look at the underscore (_) before the word supabase!
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-
-
-// 2. THE APP'S MEMORY (Bookmarks for editing)
+// 2. THE APP'S MEMORY
 let inventory = [];
 let customers = [];
 let editingProductId = null; 
@@ -18,13 +13,19 @@ let editingCustomerId = null;
 
 // 3. LOAD DATA FROM CLOUD
 async function loadData() {
-    const { data: prodData } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
-    inventory = prodData || [];
+    try {
+        const { data: prodData, error: pErr } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
+        if (pErr) throw pErr;
+        inventory = prodData || [];
 
-    const { data: custData } = await _supabase.from('customers').select('*').order('created_at', { ascending: false });
-    customers = custData || [];
+        const { data: custData, error: cErr } = await _supabase.from('customers').select('*').order('created_at', { ascending: false });
+        if (cErr) throw cErr;
+        customers = custData || [];
 
-    renderUI();
+        renderUI();
+    } catch (err) {
+        console.error("Load Error:", err.message);
+    }
 }
 
 // 4. SAVE OR UPDATE PRODUCT
@@ -44,24 +45,21 @@ async function saveProduct() {
 
     let result;
     if (editingProductId) {
-        // UPDATE old product
         result = await _supabase.from('products').update(productData).eq('id', editingProductId);
-        editingProductId = null; // Clear bookmark
+        editingProductId = null;
     } else {
-        // INSERT new product
         result = await _supabase.from('products').insert([productData]);
     }
 
-    if (result.error) {
-        alert("Error: " + result.error.message);
-    } else {
+    if (result.error) alert("Error: " + result.error.message);
+    else {
         alert("Inventory Updated!");
         clearProductForm();
         loadData();
     }
 }
 
-// 5. SAVE OR UPDATE CUSTOMER (For New Payments)
+// 5. SAVE OR UPDATE CUSTOMER
 async function saveCustomer() {
     const total = parseFloat(document.getElementById('c-total').value) || 0;
     const paid = parseFloat(document.getElementById('c-paid').value) || 0;
@@ -79,24 +77,21 @@ async function saveCustomer() {
 
     let result;
     if (editingCustomerId) {
-        // UPDATE old customer (New Payment)
         result = await _supabase.from('customers').update(customerData).eq('id', editingCustomerId);
-        editingCustomerId = null; // Clear bookmark
+        editingCustomerId = null;
     } else {
-        // INSERT new customer
         result = await _supabase.from('customers').insert([customerData]);
     }
 
-    if (result.error) {
-        alert("Error: " + result.error.message);
-    } else {
+    if (result.error) alert("Error: " + result.error.message);
+    else {
         alert("Ledger Updated!");
         clearCustomerForm();
         loadData();
     }
 }
 
-// 6. DELETE FUNCTION (With Safety Lock)
+// 6. DELETE FUNCTION
 async function deleteEntry(table, id) {
     if (confirm("Are you sure? This will delete the record forever!")) {
         const { error } = await _supabase.from(table).delete().eq('id', id);
@@ -105,7 +100,7 @@ async function deleteEntry(table, id) {
     }
 }
 
-// 7. EDIT PREPARATION (Fill the boxes)
+// 7. EDIT PREPARATION
 function startEditProduct(id) {
     const p = inventory.find(i => i.id === id);
     editingProductId = id;
@@ -131,13 +126,13 @@ function startEditCustomer(id) {
 
 // 8. RENDER THE TABLES
 function renderUI() {
-    // Inventory Table
     document.getElementById('inventory-body').innerHTML = inventory.map(p => `
         <tr>
             <td><span class="badge">${p.batch}</span></td>
             <td><strong>${p.name}</strong></td>
             <td>${p.dozens} doz</td>
-            <td>₦${p.total_naira.toLocaleString()}</td>
+            <td>₦${(p.total_naira || 0).toLocaleString()}</td>
+            <td>${(p.total_expected_cfa || 0).toLocaleString()} CFA</td>
             <td>
                 <button onclick="startEditProduct(${p.id})" style="background:orange; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Edit</button>
                 <button onclick="deleteEntry('products', ${p.id})" style="background:red; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Del</button>
@@ -145,7 +140,6 @@ function renderUI() {
         </tr>
     `).join('');
 
-    // Ledger Table
     document.getElementById('ledger-body').innerHTML = customers.map(c => `
         <tr>
             <td><strong>${c.customer_name}</strong><br><small>${c.phone_number}</small></td>
@@ -161,7 +155,6 @@ function renderUI() {
         </tr>
     `).join('');
 
-    // Dashboard Math
     const totalNaira = inventory.reduce((s, p) => s + (p.total_naira || 0), 0);
     const totalCFA = inventory.reduce((s, p) => s + (p.total_expected_cfa || 0), 0);
     const totalDebt = customers.reduce((s, c) => s + (c.balance || 0), 0);
@@ -171,13 +164,21 @@ function renderUI() {
     document.getElementById('dash-debt').innerText = `${totalDebt.toLocaleString()} CFA`;
 }
 
-// Helper clear functions
 function clearProductForm() { 
-    document.querySelectorAll('.sidebar input').forEach(i => i.value = ''); 
+    document.getElementById('p-batch').value = '';
+    document.getElementById('p-name').value = '';
+    document.getElementById('p-dozens').value = '';
+    document.getElementById('p-price-naira').value = '';
+    document.getElementById('p-cost-cfa').value = '';
+    document.getElementById('p-sell-cfa').value = '';
     editingProductId = null;
 }
 function clearCustomerForm() { 
-    document.querySelectorAll('.sidebar input, .sidebar textarea').forEach(i => i.value = ''); 
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-phone').value = '';
+    document.getElementById('c-items').value = '';
+    document.getElementById('c-total').value = '';
+    document.getElementById('c-paid').value = '';
     editingCustomerId = null;
 }
 
