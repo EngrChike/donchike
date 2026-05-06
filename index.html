@@ -2,105 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AkuDon Cosmetics Executive Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkuDon Cosmetics Management</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --gold: #D4AF37; --bg: #0b0b0b; --card: #181818; --input: #222; --text: #eee; --danger: #ff4444; --success: #00c853; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .header { text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
-        .header h1 { color: var(--gold); margin: 0; font-size: 1.6rem; letter-spacing: 2px; }
-        
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: var(--card); padding: 15px; border-radius: 10px; border-top: 4px solid var(--gold); text-align: center; }
-        .stat-card h3 { margin: 0; font-size: 0.8rem; color: #888; text-transform: uppercase; }
-        .stat-card p { margin: 10px 0 0 0; font-size: 1.2rem; font-weight: bold; }
-
-        .main-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1100px) { .main-layout { grid-template-columns: 400px 1fr; } }
-
-        .panel { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; height: fit-content; }
-        h2 { color: var(--gold); font-size: 1.1rem; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
-
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: var(--input); border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; font-size: 1rem; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        :root { --gold: #D4AF37; --bg: #0b0b0b; --card: #1a1a1a; --text: #eee; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1024px) { .grid { grid-template-columns: 380px 1fr; } }
+        .panel { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn-gold { background: var(--gold); color: black; }
-        .btn-success { background: var(--success); color: white; margin-top: 10px; }
-        
-        .queue-box { background: #111; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--gold); min-height: 50px; }
-        .queue-item { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 5px 0; border-bottom: 1px solid #222; }
-
-        .table-container { overflow-x: auto; background: var(--card); border-radius: 15px; padding: 15px; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid #333; font-size: 0.8rem; }
-        td { padding: 12px; border-bottom: 1px solid #222; vertical-align: top; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .btn-green { background: #00c853; color: white; }
+        .table-wrap { overflow-x: auto; background: var(--card); padding: 15px; border-radius: 12px; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { text-align: left; color: var(--gold); border-bottom: 2px solid #333; padding: 10px; font-size: 0.8rem; }
+        td { padding: 10px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        .stat-box { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--gold); }
     </style>
 </head>
 <body>
+    <h1 style="color:var(--gold); text-align:center;">AKUDON COSMETICS VENTURES</h1>
+    
+    <div class="grid">
+        <div class="panel">
+            <h2>Inventory Entry</h2>
+            <input type="text" id="p-batch" placeholder="Batch Name">
+            <input type="text" id="p-name" placeholder="Product Name">
+            <input type="number" id="p-dozens" placeholder="Number of Dozens">
+            <input type="number" id="p-naira" placeholder="Price in Naira (₦)">
+            <input type="number" id="p-cfa-cost" placeholder="Price in CFA (Cost)">
+            <input type="number" id="p-sell-cfa" placeholder="Expected Selling Price (CFA)">
+            <button class="btn btn-gold" onclick="saveProduct()">SAVE PRODUCT</button>
 
-<div class="header"><h1>AKUDON COSMETICS VENTURES</h1></div>
+            <hr style="margin: 25px 0; border: 0.5px solid #333;">
 
-<div class="dashboard">
-    <div class="stat-card"><h3>Total Stock (Naira)</h3><p id="stat-naira">₦0</p></div>
-    <div class="stat-card"><h3>Total Stock (CFA)</h3><p id="stat-cfa">0 CFA</p></div>
-    <div class="stat-card"><h3>Expected Sales</h3><p id="stat-expect" style="color:var(--success)">0 CFA</p></div>
-    <div class="stat-card"><h3>Total Debt</h3><p id="stat-debt" style="color:var(--danger)">0 CFA</p></div>
-</div>
-
-<div class="main-layout">
-    <!-- Left Panel: Forms -->
-    <div class="panel">
-        <h2 id="p-form-title">1. Stock Entry</h2>
-        <input type="text" id="p-batch" placeholder="Batch Name (e.g. Nov 2026)">
-        <input type="text" id="p-name" placeholder="Product Name">
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="p-dozens" step="0.1" placeholder="Dozens">
-            <input type="number" id="p-naira" placeholder="Price ₦">
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="p-cfa-cost" placeholder="Cost CFA">
-            <input type="number" id="p-sell-cfa" placeholder="Selling CFA">
-        </div>
-        <button class="btn btn-gold" onclick="saveProduct()">SAVE TO INVENTORY</button>
-
-        <h2 style="margin-top: 30px;" id="c-form-title">2. Customer Sale</h2>
-        <input type="text" id="c-name" placeholder="Customer Name">
-        <input type="text" id="c-phone" placeholder="Phone Number">
-        
-        <div style="background: #222; padding: 10px; border-radius: 8px;">
-            <label style="font-size: 0.8rem; color: var(--gold);">Select Product & Qty</label>
-            <input list="prod-list" id="sel-prod" placeholder="Select Product..." onchange="autoFillPrice()">
-            <datalist id="prod-list"></datalist>
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="sel-qty" step="0.1" placeholder="Qty (Doz)">
-                <input type="number" id="sel-price" placeholder="Price CFA">
+            <h2>Customer Details</h2>
+            <input type="text" id="c-name" placeholder="Customer Name">
+            <input type="text" id="c-phone" placeholder="Phone Number">
+            <div style="background: #252525; padding: 10px; border-radius: 8px;">
+                <input list="prod-list" id="sel-prod" placeholder="Select Product..." onchange="autoFillPrice()">
+                <datalist id="prod-list"></datalist>
+                <input type="number" id="sel-qty" placeholder="Add Amount of Dozen">
+                <input type="number" id="sel-price" placeholder="Price (CFA)">
+                <button class="btn" style="background:#444; color:white;" onclick="addToQueue()">+ Add Item to Sale</button>
             </div>
-            <button class="btn" style="background:#444; color:white; padding:10px;" onclick="addToQueue()">+ Add to List</button>
+            <div id="item-queue" style="margin: 10px 0; font-size: 0.8rem; color: var(--gold);"></div>
+            <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
+            <button class="btn btn-green" onclick="saveCustomer()">SAVE CUSTOMER TRANSACTION</button>
         </div>
 
-        <div class="queue-box" id="item-queue">No items added.</div>
-        
-        <input type="number" id="c-paid" placeholder="Amount Paid Now (CFA)">
-        <button class="btn btn-success" onclick="saveCustomer()">CONFIRM & POST SALE</button>
+        <div>
+            <div class="stat-box" id="totals-box">
+                <strong>Inventory Value:</strong> ₦0 | 0 CFA <br>
+                <strong>Expected Revenue:</strong> 0 CFA
+            </div>
+            <div class="table-wrap">
+                <h3>Customer Ledger</h3>
+                <table>
+                    <thead><tr><th>Name/Phone</th><th>Items</th><th>Total</th><th>Paid</th><th>Balance</th><th>Last Update</th><th>Actions</th></tr></thead>
+                    <tbody id="ledger-body"></tbody>
+                </table>
+            </div>
+            <div class="table-wrap">
+                <h3>Product Stock</h3>
+                <table>
+                    <thead><tr><th>Batch</th><th>Product</th><th>Stock</th><th>Naira</th><th>CFA</th><th>Actions</th></tr></thead>
+                    <tbody id="stock-body"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-    <!-- Right Panel: Tables -->
-    <div class="table-container">
-        <h2>Customer Ledger</h2>
-        <table>
-            <thead><tr><th>Customer / Items</th><th>Phone</th><th>Total</th><th>Paid</th><th>Debt</th><th>Date</th><th>Action</th></tr></thead>
-            <tbody id="ledger-body"></tbody>
-        </table>
-
-        <h2 style="margin-top: 40px;">Live Inventory</h2>
-        <table>
-            <thead><tr><th>Batch</th><th>Product</th><th>Stock</th><th>Naira Cost</th><th>CFA Selling</th><th>Action</th></tr></thead>
-            <tbody id="inventory-body"></tbody>
-        </table>
-    </div>
-</div>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
