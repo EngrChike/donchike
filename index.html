@@ -3,69 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AkuDon Executive Terminal</title>
+    <title>AkuDon Cosmetics Executive Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --gold: #D4AF37; --bg: #121212; --card: #1e1e1e; --input: #2a2a2a; --text: #e0e0e0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
-        .header { text-align: center; border-bottom: 2px solid var(--gold); padding: 15px 0; margin-bottom: 20px; }
-        .header h1 { margin: 0; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; font-size: 1.4rem; }
-        .grid { display: flex; flex-direction: column; gap: 20px; }
-        @media (min-width: 1024px) { .grid { flex-direction: row; align-items: flex-start; } }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; flex: 1; border: 1px solid #333; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; background: var(--input); border: 1px solid #444; border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; }
-        .btn-gold { background: var(--gold); color: #000; }
-        .btn-green { background: #00c853; color: #fff; }
-        .table-wrap { overflow-x: auto; margin-top: 10px; border-radius: 8px; background: #1a1a1a; }
-        table { width: 100%; border-collapse: collapse; min-width: 550px; }
-        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid #333; font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #2a2a2a; font-size: 0.9rem; }
-        .pending-item { background: #252525; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid var(--gold); display: flex; justify-content: space-between; }
+        :root { --gold: #D4AF37; --bg: #0b0b0b; --card: #181818; --input: #222; --text: #eee; --danger: #ff4444; --success: #00c853; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        .header { text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { color: var(--gold); margin: 0; font-size: 1.6rem; letter-spacing: 2px; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--card); padding: 15px; border-radius: 10px; border-top: 4px solid var(--gold); text-align: center; }
+        .stat-card h3 { margin: 0; font-size: 0.8rem; color: #888; text-transform: uppercase; }
+        .stat-card p { margin: 10px 0 0 0; font-size: 1.2rem; font-weight: bold; }
+
+        .main-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1100px) { .main-layout { grid-template-columns: 400px 1fr; } }
+
+        .panel { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; height: fit-content; }
+        h2 { color: var(--gold); font-size: 1.1rem; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
+
+        input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: var(--input); border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; font-size: 1rem; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        .btn-gold { background: var(--gold); color: black; }
+        .btn-success { background: var(--success); color: white; margin-top: 10px; }
+        
+        .queue-box { background: #111; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed var(--gold); min-height: 50px; }
+        .queue-item { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 5px 0; border-bottom: 1px solid #222; }
+
+        .table-container { overflow-x: auto; background: var(--card); border-radius: 15px; padding: 15px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid #333; font-size: 0.8rem; }
+        td { padding: 12px; border-bottom: 1px solid #222; vertical-align: top; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>AKUDON COSMETICS</h1></div>
-    <div class="grid">
-        <div class="card" style="max-width: 420px;">
-            <h2>Inventory Manager</h2>
-            <input type="text" id="p-name" placeholder="Product Name">
-            <input type="number" id="p-dozens" step="0.1" placeholder="Dozens (Initial Stock)">
-            <input type="number" id="p-sell-cfa" placeholder="Selling Price (CFA)">
-            <button class="btn btn-gold" onclick="saveProduct()">SAVE PRODUCT</button>
-            <hr style="margin: 30px 0; border: 0.5px solid #333;">
-            <h2>New Transaction</h2>
-            <input type="text" id="c-name" placeholder="Customer Name">
-            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                <input list="prod-list" id="sel-prod" placeholder="Search Product..." onchange="autoFillPrice()">
-                <datalist id="prod-list"></datalist>
-                <div style="display: flex; gap: 8px;">
-                    <input type="number" id="sel-qty" step="0.1" placeholder="Qty">
-                    <input type="number" id="sel-price" placeholder="Price (CFA)">
-                </div>
-                <button class="btn" style="background:#333; color:var(--gold);" onclick="addToList()">+ ADD ITEM</button>
-            </div>
-            <div id="item-queue"></div>
-            <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
-            <button class="btn btn-green" onclick="saveCustomer()">CONFIRM & POST SALE</button>
+
+<div class="header"><h1>AKUDON COSMETICS VENTURES</h1></div>
+
+<div class="dashboard">
+    <div class="stat-card"><h3>Total Stock (Naira)</h3><p id="stat-naira">₦0</p></div>
+    <div class="stat-card"><h3>Total Stock (CFA)</h3><p id="stat-cfa">0 CFA</p></div>
+    <div class="stat-card"><h3>Expected Sales</h3><p id="stat-expect" style="color:var(--success)">0 CFA</p></div>
+    <div class="stat-card"><h3>Total Debt</h3><p id="stat-debt" style="color:var(--danger)">0 CFA</p></div>
+</div>
+
+<div class="main-layout">
+    <!-- Left Panel: Forms -->
+    <div class="panel">
+        <h2 id="p-form-title">1. Stock Entry</h2>
+        <input type="text" id="p-batch" placeholder="Batch Name (e.g. Nov 2026)">
+        <input type="text" id="p-name" placeholder="Product Name">
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="p-dozens" step="0.1" placeholder="Dozens">
+            <input type="number" id="p-naira" placeholder="Price ₦">
         </div>
-        <div class="card">
-            <h2>Customer Ledger</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Customer / Goods</th><th>Debt (CFA)</th><th>Action</th></tr></thead>
-                    <tbody id="ledger-body"></tbody>
-                </table>
-            </div>
-            <h2 style="margin-top: 40px;">Current Stock Status</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Product Name</th><th>Stock Level</th><th>Action</th></tr></thead>
-                    <tbody id="stock-body"></tbody>
-                </table>
-            </div>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="p-cfa-cost" placeholder="Cost CFA">
+            <input type="number" id="p-sell-cfa" placeholder="Selling CFA">
         </div>
+        <button class="btn btn-gold" onclick="saveProduct()">SAVE TO INVENTORY</button>
+
+        <h2 style="margin-top: 30px;" id="c-form-title">2. Customer Sale</h2>
+        <input type="text" id="c-name" placeholder="Customer Name">
+        <input type="text" id="c-phone" placeholder="Phone Number">
+        
+        <div style="background: #222; padding: 10px; border-radius: 8px;">
+            <label style="font-size: 0.8rem; color: var(--gold);">Select Product & Qty</label>
+            <input list="prod-list" id="sel-prod" placeholder="Select Product..." onchange="autoFillPrice()">
+            <datalist id="prod-list"></datalist>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="sel-qty" step="0.1" placeholder="Qty (Doz)">
+                <input type="number" id="sel-price" placeholder="Price CFA">
+            </div>
+            <button class="btn" style="background:#444; color:white; padding:10px;" onclick="addToQueue()">+ Add to List</button>
+        </div>
+
+        <div class="queue-box" id="item-queue">No items added.</div>
+        
+        <input type="number" id="c-paid" placeholder="Amount Paid Now (CFA)">
+        <button class="btn btn-success" onclick="saveCustomer()">CONFIRM & POST SALE</button>
     </div>
-    <script src="app.js"></script>
+
+    <!-- Right Panel: Tables -->
+    <div class="table-container">
+        <h2>Customer Ledger</h2>
+        <table>
+            <thead><tr><th>Customer / Items</th><th>Phone</th><th>Total</th><th>Paid</th><th>Debt</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="ledger-body"></tbody>
+        </table>
+
+        <h2 style="margin-top: 40px;">Live Inventory</h2>
+        <table>
+            <thead><tr><th>Batch</th><th>Product</th><th>Stock</th><th>Naira Cost</th><th>CFA Selling</th><th>Action</th></tr></thead>
+            <tbody id="inventory-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
