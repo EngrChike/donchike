@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Inventory & Ledger Pro</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --surface: #ffffff;
+            --background: #f1f5f9;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { margin: 0; background-color: var(--background); color: var(--text-main); }
+        
+        .navbar { background: var(--surface); padding: 1rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .navbar h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        
+        /* Dashboard Cards */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: var(--surface); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .card h3 { margin: 0 0 0.5rem 0; color: var(--text-light); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .card .value { font-size: 2rem; font-weight: 700; margin: 0; }
+        .card .value.naira { color: var(--text-main); }
+        .card .value.cfa { color: var(--success); }
+
+        /* Forms & Tables Layout */
+        .grid-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
+        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
+        
+        .section-header { margin-bottom: 1rem; font-size: 1.2rem; font-weight: 600; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; }
+        input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; outline: none; transition: border-color 0.2s; }
+        input:focus { border-color: var(--primary); }
+        button { background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+
+        /* Tables */
+        .table-container { background: var(--surface); border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-light); font-size: 0.85rem; text-transform: uppercase; }
+        tr:last-child td { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1>Inventory & Ledger Pro</h1>
+    </nav>
+
+    <div class="container">
+        <!-- High-Level Dashboard -->
+        <div class="dashboard">
+            <div class="card">
+                <h3>Total Supply Cost</h3>
+                <p class="value naira" id="dash-total-naira">₦0.00</p>
+            </div>
+            <div class="card">
+                <h3>Expected Total Revenue</h3>
+                <p class="value cfa" id="dash-total-cfa">0 CFA</p>
+            </div>
+            <div class="card">
+                <h3>Total Outstanding Debt</h3>
+                <p class="value" id="dash-debt">0 CFA</p>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <!-- Left Column: Data Entry -->
+            <div>
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="section-header">Log New Arrival</div>
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="prod-name" placeholder="e.g., Premium Lotion">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Amount (Dozens)</label>
+                            <input type="number" id="prod-dozens" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Price per Dozen (₦)</label>
+                            <input type="number" id="prod-price-naira" placeholder="0">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Total Cost (CFA)</label>
+                            <input type="number" id="prod-cost-cfa" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Sell Price (CFA)</label>
+                            <input type="number" id="prod-sell-cfa" placeholder="0">
+                        </div>
+                    </div>
+                    <button onclick="addProduct()">Add to Inventory</button>
+                </div>
+
+                <div class="card">
+                    <div class="section-header">Register Customer Payment</div>
+                    <div class="form-group">
+                        <label>Customer Name</label>
+                        <input type="text" id="cust-name" placeholder="e.g., Madam Rose">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Amount Bought (CFA)</label>
+                        <input type="number" id="cust-total" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount Paid (CFA)</label>
+                        <input type="number" id="cust-paid" placeholder="0">
+                    </div>
+                    <button onclick="addOrUpdateCustomer()">Update Ledger</button>
+                </div>
+            </div>
+
+            <!-- Right Column: Data Visualization -->
+            <div>
+                <div class="section-header">Active Inventory</div>
+                <div class="table-container" style="margin-bottom: 2rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Stock (Dozens)</th>
+                                <th>Total Cost (₦)</th>
+                                <th>Expected (CFA)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section-header">Customer Ledger (Debt Tracking)</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Total Bill</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-table">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management (Temporary memory before we add database persistence)
+        let inventory = [];
+        let customers = [];
+
+        // Formatting utilities
+        const formatNaira = (num) => `₦${num.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        const formatCFA = (num) => `${num.toLocaleString('fr-FR')} CFA`;
+        const formatDate = () => new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        // Function 1: Add a new product shipment
+        function addProduct() {
+            const name = document.getElementById('prod-name').value;
+            const dozens = parseFloat(document.getElementById('prod-dozens').value) || 0;
+            const priceNaira = parseFloat(document.getElementById('prod-price-naira').value) || 0;
+            const costCFA = parseFloat(document.getElementById('prod-cost-cfa').value) || 0;
+            const expectedSellCFA = parseFloat(document.getElementById('prod-sell-cfa').value) || 0;
+
+            if (!name) return alert("Product name is required.");
+
+            // The Core Math 
+            const totalNaira = dozens * priceNaira;
+            const totalExpectedCFA = dozens * expectedSellCFA; 
+
+            inventory.push({ name, dozens, totalNaira, costCFA, expectedSellCFA, totalExpectedCFA });
+            updateUI();
+        }
+
+        // Function 2: Manage Customers and Debt
+        function addOrUpdateCustomer() {
+            const name = document.getElementById('cust-name').value;
+            const totalBought = parseFloat(document.getElementById('cust-total').value) || 0;
+            const amountPaid = parseFloat(document.getElementById('cust-paid').value) || 0;
+
+            if (!name) return alert("Customer name is required.");
+
+            // Calculate Balance safely (Total Bought minus Amount Paid)
+            const balance = totalBought - amountPaid;
+            const lastPaymentDate = formatDate();
+
+            customers.push({ name, totalBought, amountPaid, balance, lastPaymentDate });
+            updateUI();
+        }
+
+        // Function 3: Update the visual dashboard and tables
+        function updateUI() {
+            // Update Dashboards
+            const totalSupplyNaira = inventory.reduce((sum, item) => sum + item.totalNaira, 0);
+            const totalRevenueCFA = inventory.reduce((sum, item) => sum + item.totalExpectedCFA, 0);
+            const totalDebtCFA = customers.reduce((sum, cust) => sum + cust.balance, 0);
+
+            document.getElementById('dash-total-naira').innerText = formatNaira(totalSupplyNaira);
+            document.getElementById('dash-total-cfa').innerText = formatCFA(totalRevenueCFA);
+            document.getElementById('dash-debt').innerText = formatCFA(totalDebtCFA);
+
+            // Render Inventory Table
+            const invTable = document.getElementById('inventory-table');
+            invTable.innerHTML = inventory.map(item => `
+                <tr>
+                    <td><strong>${item.name}</strong></td>
+                    <td>${item.dozens}</td>
+                    <td>${formatNaira(item.totalNaira)}</td>
+                    <td>${formatCFA(item.totalExpectedCFA)}</td>
+                </tr>
+            `).join('');
+
+            // Render Ledger Table
+            const ledgerTable = document.getElementById('ledger-table');
+            ledgerTable.innerHTML = customers.map(cust => `
+                <tr>
+                    <td><strong>${cust.name}</strong></td>
+                    <td>${formatCFA(cust.totalBought)}</td>
+                    <td>${formatCFA(cust.amountPaid)}</td>
+                    <td style="color: ${cust.balance > 0 ? '#ef4444' : '#10b981'}; font-weight: bold;">
+                        ${formatCFA(cust.balance)}
+                    </td>
+                    <td style="font-size: 0.85rem; color: #64748b;">${cust.lastPaymentDate}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
