@@ -19,12 +19,17 @@
         .btn-gold { background: var(--primary-gold); color: #000; font-weight: bold; padding: 14px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; }
         .btn-add-item { background: #444; color: var(--primary-gold); border: 1px dashed var(--primary-gold); padding: 10px; width: 100%; cursor: pointer; border-radius: 8px; margin-bottom: 15px; }
         .table-section { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 30px; overflow-x: auto; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .table-header h2 { margin: 0; }
+        .search-bar { width: 250px; margin-bottom: 0; padding: 8px; border-color: var(--primary-gold); }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { text-align: left; padding: 12px; color: var(--primary-gold); border-bottom: 2px solid #333; }
         td { padding: 12px; border-bottom: 1px solid #2a2a2a; }
-        .pending-box { background: #151515; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; }
+        .pending-box { background: #151515; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; min-height: 40px;}
         .low-stock { color: var(--danger); font-weight: bold; animation: pulse 1.5s infinite; }
         @keyframes pulse { 50% { opacity: 0.4; } }
+        .btn-edit { color: var(--primary-gold); background: none; border: 1px solid var(--primary-gold); padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        .btn-del { color: var(--danger); background: none; border: 1px solid var(--danger); padding: 4px 8px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -41,7 +46,7 @@
             <input type="text" id="p-batch" placeholder="Batch Name">
             <input type="text" id="p-name" placeholder="Product Name">
             <div style="display: flex; gap: 10px;">
-                <input type="number" id="p-dozens" step="0.5" placeholder="Total Doz">
+                <input type="number" id="p-dozens" step="0.1" placeholder="Total Doz">
                 <input type="number" id="p-price-naira" placeholder="Cost ₦">
             </div>
             <input type="number" id="p-sell-cfa" placeholder="Selling Price (CFA)">
@@ -55,11 +60,11 @@
             
             <div style="border: 1px solid #444; padding: 10px; border-radius: 8px;">
                 <label style="font-size: 0.8rem; color: #888;">Select Product</label>
-                <input list="product-list" id="item-select" placeholder="Type to search product..." onchange="handleProductSelect()">
+                <input list="product-list" id="item-select" placeholder="Type product name..." onchange="handleProductSelect()">
                 <datalist id="product-list"></datalist>
                 
                 <div style="display: flex; gap: 10px;">
-                    <input type="number" id="item-qty" step="0.5" placeholder="Qty (Doz)">
+                    <input type="number" id="item-qty" step="0.1" placeholder="Qty (Doz)">
                     <input type="number" id="item-price" placeholder="Price (CFA)">
                 </div>
                 <button class="btn-add-item" onclick="addItemToTransaction()">+ Add to List</button>
@@ -68,21 +73,24 @@
             <div class="pending-box" id="pending-items">No items added yet.</div>
             
             <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
-            <button class="btn-gold" style="background:var(--success); color:white;" onclick="saveCustomer()">SAVE & UPDATE STOCK</button>
+            <button class="btn-gold" style="background:var(--success); color:white;" onclick="saveCustomer()">CONFIRM SALE</button>
         </div>
 
         <div class="content">
             <div class="table-section">
-                <h2>Inventory</h2>
+                <h2>Inventory Status</h2>
                 <table>
-                    <thead><tr><th>Batch</th><th>Product</th><th>Balance</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Batch</th><th>Product</th><th>Balance</th><th>Actions</th></tr></thead>
                     <tbody id="inventory-body"></tbody>
                 </table>
             </div>
             <div class="table-section">
-                <h2>Ledger</h2>
+                <div class="table-header">
+                    <h2>Sales Ledger</h2>
+                    <input type="text" id="ledger-search" class="search-bar" placeholder="Find name or phone..." oninput="renderUI()">
+                </div>
                 <table>
-                    <thead><tr><th>Customer</th><th>Items</th><th>Bill</th><th>Paid</th><th>Date</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Customer</th><th>Items Bought</th><th>Bill</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody id="ledger-body"></tbody>
                 </table>
             </div>
