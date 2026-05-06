@@ -3,77 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AkuDon Cosmetics Management</title>
+    <title>AkuDon Executive Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --gold: #D4AF37; --bg: #0b0b0b; --card: #1a1a1a; --text: #eee; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1024px) { .grid { grid-template-columns: 380px 1fr; } }
-        .panel { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        .btn-gold { background: var(--gold); color: black; }
-        .btn-green { background: #00c853; color: white; }
-        .table-wrap { overflow-x: auto; background: var(--card); padding: 15px; border-radius: 12px; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { text-align: left; color: var(--gold); border-bottom: 2px solid #333; padding: 10px; font-size: 0.8rem; }
-        td { padding: 10px; border-bottom: 1px solid #222; font-size: 0.9rem; }
-        .stat-box { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--gold); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f0f0f; color: #e5e7eb; }
+        .gold-border { border-color: #D4AF37; }
+        .gold-text { color: #D4AF37; }
+        .gold-bg { background-color: #D4AF37; }
     </style>
 </head>
-<body>
-    <h1 style="color:var(--gold); text-align:center;">AKUDON COSMETICS VENTURES</h1>
-    
-    <div class="grid">
-        <div class="panel">
-            <h2>Inventory Entry</h2>
-            <input type="text" id="p-batch" placeholder="Batch Name">
-            <input type="text" id="p-name" placeholder="Product Name">
-            <input type="number" id="p-dozens" placeholder="Number of Dozens">
-            <input type="number" id="p-naira" placeholder="Price in Naira (₦)">
-            <input type="number" id="p-cfa-cost" placeholder="Price in CFA (Cost)">
-            <input type="number" id="p-sell-cfa" placeholder="Expected Selling Price (CFA)">
-            <button class="btn btn-gold" onclick="saveProduct()">SAVE PRODUCT</button>
+<body class="p-4 md:p-8">
 
-            <hr style="margin: 25px 0; border: 0.5px solid #333;">
+    <header class="text-center mb-10">
+        <h1 class="text-3xl font-bold gold-text tracking-widest uppercase">AkuDon Cosmetics</h1>
+        <p class="text-gray-500 text-sm">Executive Inventory & Sales Terminal</p>
+    </header>
 
-            <h2>Customer Details</h2>
-            <input type="text" id="c-name" placeholder="Customer Name">
-            <input type="text" id="c-phone" placeholder="Phone Number">
-            <div style="background: #252525; padding: 10px; border-radius: 8px;">
-                <input list="prod-list" id="sel-prod" placeholder="Select Product..." onchange="autoFillPrice()">
-                <datalist id="prod-list"></datalist>
-                <input type="number" id="sel-qty" placeholder="Add Amount of Dozen">
-                <input type="number" id="sel-price" placeholder="Price (CFA)">
-                <button class="btn" style="background:#444; color:white;" onclick="addToQueue()">+ Add Item to Sale</button>
-            </div>
-            <div id="item-queue" style="margin: 10px 0; font-size: 0.8rem; color: var(--gold);"></div>
-            <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
-            <button class="btn btn-green" onclick="saveCustomer()">SAVE CUSTOMER TRANSACTION</button>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-zinc-900 p-4 rounded-xl border-t-4 gold-border shadow-lg">
+            <h3 class="text-xs text-gray-400 uppercase">Total Investment (₦)</h3>
+            <p id="total-naira" class="text-xl font-bold">₦0</p>
+        </div>
+        <div class="bg-zinc-900 p-4 rounded-xl border-t-4 gold-border shadow-lg">
+            <h3 class="text-xs text-gray-400 uppercase">Total Investment (CFA)</h3>
+            <p id="total-cfa" class="text-xl font-bold">0 CFA</p>
+        </div>
+        <div class="bg-zinc-900 p-4 rounded-xl border-t-4 border-green-500 shadow-lg">
+            <h3 class="text-xs text-gray-400 uppercase">Expected Sales (CFA)</h3>
+            <p id="expected-cfa" class="text-xl font-bold text-green-500">0 CFA</p>
+        </div>
+        <div class="bg-zinc-900 p-4 rounded-xl border-t-4 border-red-500 shadow-lg">
+            <h3 class="text-xs text-gray-400 uppercase">Total Debt Owed</h3>
+            <p id="total-debt" class="text-xl font-bold text-red-500">0 CFA</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <div class="lg:col-span-4 space-y-8">
+            
+            <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+                <h2 class="text-lg font-bold gold-text mb-4 flex justify-between">
+                    <span>📦 Batch Management</span>
+                    <button onclick="clearProductForm()" class="text-xs text-gray-500">New</button>
+                </h2>
+                <div class="space-y-3">
+                    <input type="text" id="p-batch" placeholder="Batch Name (e.g. MAY_2026)" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700 outline-none focus:ring-1 ring-yellow-600">
+                    <input type="text" id="p-name" placeholder="Product Name" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="p-dozens" placeholder="Qty (Dozens)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                        <input type="number" id="p-naira" placeholder="Price (₦)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="p-cfa" placeholder="Price (CFA)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                        <input type="number" id="p-sell" placeholder="Selling (CFA)" class="bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    </div>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-bold py-3 rounded-lg hover:opacity-90 transition">SAVE TO BATCH</button>
+                </div>
+            </section>
+
+            <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+                <h2 class="text-lg font-bold text-green-500 mb-4">🛒 Sales & Customer</h2>
+                <div class="space-y-3">
+                    <input type="text" id="c-name" placeholder="Customer Name" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    <input type="text" id="c-phone" placeholder="Phone Number" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    
+                    <div class="p-3 bg-black rounded-lg border border-dashed border-zinc-700">
+                        <input list="inventory-list" id="sale-item" placeholder="Select Product..." class="w-full bg-transparent mb-2 outline-none gold-text">
+                        <datalist id="inventory-list"></datalist>
+                        <div class="flex gap-2">
+                            <input type="number" id="sale-qty" placeholder="Dozens" class="w-1/2 bg-zinc-800 p-2 rounded">
+                            <button onclick="addToQueue()" class="w-1/2 bg-zinc-700 font-bold rounded text-sm">+ Add Item</button>
+                        </div>
+                    </div>
+
+                    <div id="sale-queue" class="text-sm space-y-1 py-2 text-gray-400"></div>
+
+                    <input type="number" id="c-paid" placeholder="Amount Paid (CFA)" class="w-full bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    <button onclick="saveCustomer()" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">POST TRANSACTION</button>
+                </div>
+            </section>
         </div>
 
-        <div>
-            <div class="stat-box" id="totals-box">
-                <strong>Inventory Value:</strong> ₦0 | 0 CFA <br>
-                <strong>Expected Revenue:</strong> 0 CFA
+        <div class="lg:col-span-8 space-y-8">
+            <div class="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
+                    <h2 class="font-bold">Customer Ledger</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-black text-gray-400">
+                            <tr>
+                                <th class="p-4">Customer/Items</th>
+                                <th class="p-4">Total</th>
+                                <th class="p-4">Paid</th>
+                                <th class="p-4">Balance</th>
+                                <th class="p-4">Last Update</th>
+                                <th class="p-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-table"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="table-wrap">
-                <h3>Customer Ledger</h3>
-                <table>
-                    <thead><tr><th>Name/Phone</th><th>Items</th><th>Total</th><th>Paid</th><th>Balance</th><th>Last Update</th><th>Actions</th></tr></thead>
-                    <tbody id="ledger-body"></tbody>
-                </table>
-            </div>
-            <div class="table-wrap">
-                <h3>Product Stock</h3>
-                <table>
-                    <thead><tr><th>Batch</th><th>Product</th><th>Stock</th><th>Naira</th><th>CFA</th><th>Actions</th></tr></thead>
-                    <tbody id="stock-body"></tbody>
-                </table>
+
+            <div class="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                <div class="p-4 border-b border-zinc-800">
+                    <h2 class="font-bold">Inventory Status</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-black text-gray-400">
+                            <tr>
+                                <th class="p-4">Batch</th>
+                                <th class="p-4">Product</th>
+                                <th class="p-4">Stock</th>
+                                <th class="p-4">Naira Cost</th>
+                                <th class="p-4">CFA Selling</th>
+                                <th class="p-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
     <script src="app.js"></script>
 </body>
 </html>
