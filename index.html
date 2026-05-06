@@ -3,102 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AkuDon Ledger Pro</title>
-    <!-- 1. The Phone Connection to Supabase (The Library) -->
+    <title>AkuDon Ledger Pro | Business Manager</title>
+    
+    <!-- The Phone Connection to Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        :root { --primary: #2563eb; --surface: #ffffff; --background: #f1f5f9; --text: #1e293b; --success: #10b981; --accent: #f59e0b; --border: #e2e8f0; }
+        :root { 
+            --primary: #2563eb; 
+            --surface: #ffffff; 
+            --background: #f1f5f9; 
+            --text: #1e293b; 
+            --success: #10b981; 
+            --accent: #f59e0b; 
+            --danger: #ef4444;
+            --border: #e2e8f0; 
+        }
         body { font-family: 'Segoe UI', sans-serif; background: var(--background); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: auto; }
+        .container { max-width: 1300px; margin: auto; }
+        
+        /* Top Dashboard */
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; }
-        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .card h3 { margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Form Styling */
+        .grid { display: grid; grid-template-columns: 380px 1fr; gap: 30px; }
+        @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+        
+        /* Form Sections */
         .form-section { margin-bottom: 25px; }
-        h2 { font-size: 1.1rem; margin-top: 0; color: var(--primary); }
-        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        h2 { font-size: 1.2rem; margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        input:focus { border-color: var(--primary); outline: none; }
+        
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 1rem; transition: 0.2s; }
         .btn-blue { background: var(--primary); }
         .btn-gold { background: var(--accent); }
-        button:hover { opacity: 0.8; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
 
-        /* Table Styling */
-        .table-wrap { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background: #f8fafc; color: #64748b; }
-        .badge { background: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+        /* Modern Table Styling */
+        .table-wrap { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; color: #64748b; font-size: 0.75rem; text-transform: uppercase; }
+        tr:hover { background: #fcfcfc; }
+        
+        .badge { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-sm { width: auto; padding: 6px 12px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header style="margin-bottom: 30px; text-align: center;">
-            <h1 style="color: var(--primary); margin: 0;">AkuDon Business Manager</h1>
-            <p style="color: #64748b;">Inventory Tracking & Customer Ledger</p>
+        <header style="margin-bottom: 40px; border-left: 5px solid var(--primary); padding-left: 20px;">
+            <h1 style="margin: 0; font-size: 2rem;">AkuDon Executive Manager</h1>
+            <p style="margin: 5px 0 0; color: #64748b;">Global Inventory & Real-Time Debt Ledger</p>
         </header>
 
-        <!-- Top Dashboard Numbers -->
+        <!-- Dashboard Stats -->
         <div class="dashboard">
-            <div class="card"><h3>Total Stock Cost</h3><p id="dash-naira" style="font-size: 1.5rem; font-weight: bold;">₦0</p></div>
-            <div class="card"><h3>Expected Revenue</h3><p id="dash-cfa" style="font-size: 1.5rem; font-weight: bold; color: var(--success);">0 CFA</p></div>
-            <div class="card"><h3>Total Debt (Owed)</h3><p id="dash-debt" style="font-size: 1.5rem; font-weight: bold; color: #ef4444;">0 CFA</p></div>
+            <div class="card">
+                <h3>Total Supply Cost</h3>
+                <p id="dash-naira" style="font-size: 1.8rem; font-weight: bold; margin: 10px 0 0;">₦0</p>
+            </div>
+            <div class="card">
+                <h3>Expected Revenue</h3>
+                <p id="dash-cfa" style="font-size: 1.8rem; font-weight: bold; color: var(--success); margin: 10px 0 0;">0 CFA</p>
+            </div>
+            <div class="card" style="border-bottom: 4px solid var(--danger);">
+                <h3>Total Customer Debt</h3>
+                <p id="dash-debt" style="font-size: 1.8rem; font-weight: bold; color: var(--danger); margin: 10px 0 0;">0 CFA</p>
+            </div>
         </div>
 
         <div class="grid">
-            <!-- Left Side: Data Entry Forms -->
+            <!-- Sidebar: Forms -->
             <div class="sidebar">
                 <div class="card form-section">
-                    <h2>📦 New Batch Arrival</h2>
-                    <input type="text" id="p-batch" placeholder="Batch Name (e.g. June 2026)">
+                    <h2>📦 Inventory Entry</h2>
+                    <input type="text" id="p-batch" placeholder="Batch (e.g., June 2026 Arrival)">
                     <input type="text" id="p-name" placeholder="Product Name">
-                    <input type="number" id="p-dozens" placeholder="Quantity (Dozens)">
-                    <input type="number" id="p-price-naira" placeholder="Price per Dozen (₦)">
-                    <input type="number" id="p-cost-cfa" placeholder="Total Cost in CFA">
-                    <input type="number" id="p-sell-cfa" placeholder="Selling Price per Dozen (CFA)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="number" id="p-dozens" placeholder="Dozens">
+                        <input type="number" id="p-price-naira" placeholder="₦ per Dozen">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="number" id="p-cost-cfa" placeholder="Total Cost CFA">
+                        <input type="number" id="p-sell-cfa" placeholder="Sell Price CFA">
+                    </div>
                     <button class="btn-blue" onclick="saveProduct()">Save Product to Cloud</button>
                 </div>
 
                 <div class="card form-section">
-                    <h2>👤 Customer Sale & Debt</h2>
+                    <h2>👤 Customer Transaction</h2>
                     <input type="text" id="c-name" placeholder="Customer Name">
                     <input type="text" id="c-phone" placeholder="Phone Number">
-                    <textarea id="c-items" placeholder="What did they buy? (e.g. 5 doz. Soap)"></textarea>
-                    <input type="number" id="c-total" placeholder="Total Bill (CFA)">
-                    <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
-                    <button class="btn-gold" onclick="saveCustomer()">Log Sale & Debt</button>
+                    <textarea id="c-items" placeholder="Items Bought (e.g., 10 doz. Gold Cream)"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="number" id="c-total" placeholder="Total Bill (CFA)">
+                        <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
+                    </div>
+                    <button class="btn-gold" onclick="saveCustomer()">Update Ledger & Debt</button>
                 </div>
             </div>
 
-            <!-- Right Side: Display Tables -->
+            <!-- Main Display -->
             <div class="main-content">
-                <h2>Active Inventory (Batch List)</h2>
+                <h2 style="color: #475569;">Current Inventory</h2>
                 <div class="table-wrap">
                     <table>
                         <thead>
-                            <tr><th>Batch</th><th>Product</th><th>Qty</th><th>Cost (₦)</th><th>Expected (CFA)</th></tr>
+                            <tr>
+                                <th>Batch</th>
+                                <th>Product</th>
+                                <th>Stock</th>
+                                <th>Cost (₦)</th>
+                                <th>Revenue (CFA)</th>
+                                <th>Actions</th>
+                            </tr>
                         </thead>
-                        <tbody id="inventory-body"></tbody>
+                        <tbody id="inventory-body">
+                            <!-- JS will fill this -->
+                        </tbody>
                     </table>
                 </div>
 
-                <h2>Customer Ledger (Debt Tracker)</h2>
+                <h2 style="color: #475569;">Customer Ledger (Debt Tracker)</h2>
                 <div class="table-wrap">
                     <table>
                         <thead>
-                            <tr><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Balance</th><th>Date</th></tr>
+                            <tr>
+                                <th>Customer Info</th>
+                                <th>Items</th>
+                                <th>Bill (CFA)</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
                         </thead>
-                        <tbody id="ledger-body"></tbody>
+                        <tbody id="ledger-body">
+                            <!-- JS will fill this -->
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. Link to our Brain file -->
+    <!-- Link to the Brain -->
     <script src="app.js"></script>
 </body>
 </html>
