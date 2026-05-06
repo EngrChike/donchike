@@ -2,8 +2,8 @@
 // 1. YOUR SUPABASE CONNECTION
 
 // Put your address inside the first set of quotes
-const _supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co'; 
-const _supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI'; 
+const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co'; 
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI'; 
 
 // CRITICAL: Look at the underscore (_) before the word supabase!
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
