@@ -31,7 +31,7 @@
         td { padding: 10px; border-bottom: 1px solid #2a2a2a; vertical-align: middle; }
         .btn-edit { color: var(--primary-gold); background: none; border: 1px solid var(--primary-gold); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-del { color: var(--danger); background: none; border: 1px solid var(--danger); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .pending-box { background: #151515; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; border-left: 3px solid var(--primary-gold); }
+        .pending-box { background: #151515; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; border-left: 3px solid var(--primary-gold); min-height: 40px; }
     </style>
 </head>
 <body>
@@ -57,7 +57,7 @@
             <input type="text" id="c-name" placeholder="Customer Name">
             <input type="text" id="c-phone" placeholder="Phone Number">
             <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                <input list="product-list" id="item-select" placeholder="Select Product..." onchange="handleProductSelect()">
+                <input list="product-list" id="item-select" placeholder="Search & Select Product..." onchange="handleProductSelect()">
                 <datalist id="product-list"></datalist>
                 <div style="display: flex; gap: 10px;">
                     <input type="number" id="item-qty" step="0.1" placeholder="Qty">
