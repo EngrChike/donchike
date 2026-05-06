@@ -6,83 +6,62 @@
     <title>AkuDon Executive Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary-gold: #D4AF37; --dark-bg: #121212; --card-bg: #1e1e1e; --input-bg: #2a2a2a; --text-light: #e0e0e0; --danger: #ff4444; --success: #00c853; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--dark-bg); color: var(--text-light); margin: 0; padding: 10px; -webkit-font-smoothing: antialiased; }
-        .header { text-align: center; padding: 15px 0; border-bottom: 2px solid var(--primary-gold); margin-bottom: 20px; }
-        .header h1 { margin: 0; color: var(--primary-gold); letter-spacing: 2px; text-transform: uppercase; font-size: 1.4rem; }
-        .dashboard { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; }
-        @media (min-width: 600px) { .dashboard { grid-template-columns: repeat(3, 1fr); } }
-        .stat-card { background: var(--card-bg); padding: 15px; border-radius: 12px; border-top: 3px solid var(--primary-gold); text-align: center; }
-        .stat-card h3 { margin: 0 0 5px 0; font-size: 0.8rem; color: #888; }
-        .stat-card p { margin: 0; font-size: 1.1rem; font-weight: bold; }
-        .main-grid { display: flex; flex-direction: column; gap: 20px; }
-        @media (min-width: 1024px) { .main-grid { flex-direction: row; align-items: flex-start; } }
-        .form-section { background: var(--card-bg); padding: 20px; border-radius: 16px; flex: 1; min-width: 320px; }
-        @media (min-width: 1024px) { .form-section { position: sticky; top: 10px; max-width: 400px; } }
-        input { width: 100%; padding: 14px; margin-bottom: 12px; background: var(--input-bg); border: 1px solid #333; border-radius: 8px; color: white; font-size: 16px; box-sizing: border-box; }
-        .btn-gold { background: var(--primary-gold); color: #000; font-weight: bold; padding: 16px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; font-size: 16px; }
-        .table-section { background: var(--card-bg); padding: 15px; border-radius: 16px; flex: 2; overflow: hidden; }
-        .table-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        @media (min-width: 600px) { .table-header { flex-direction: row; justify-content: space-between; align-items: center; } }
-        .search-bar { width: 100%; max-width: 300px; border: 1px solid var(--primary-gold); }
-        .table-container { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; font-size: 0.85rem; }
-        th { text-align: left; padding: 12px; color: var(--primary-gold); border-bottom: 2px solid #333; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #2a2a2a; vertical-align: middle; }
-        .btn-edit { color: var(--primary-gold); background: none; border: 1px solid var(--primary-gold); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-del { color: var(--danger); background: none; border: 1px solid var(--danger); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .pending-box { background: #151515; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; border-left: 3px solid var(--primary-gold); min-height: 40px; }
+        :root { --gold: #D4AF37; --bg: #121212; --card: #1e1e1e; --input: #2a2a2a; --text: #e0e0e0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
+        .header { text-align: center; border-bottom: 2px solid var(--gold); padding: 15px 0; margin-bottom: 20px; }
+        .header h1 { margin: 0; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; font-size: 1.4rem; }
+        .grid { display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 1024px) { .grid { flex-direction: row; align-items: flex-start; } }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; flex: 1; border: 1px solid #333; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; background: var(--input); border: 1px solid #444; border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-green { background: #00c853; color: #fff; }
+        .table-wrap { overflow-x: auto; margin-top: 10px; border-radius: 8px; background: #1a1a1a; }
+        table { width: 100%; border-collapse: collapse; min-width: 550px; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid #333; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #2a2a2a; font-size: 0.9rem; }
+        .pending-item { background: #252525; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid var(--gold); display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
     <div class="header"><h1>AKUDON COSMETICS</h1></div>
-    <div class="dashboard">
-        <div class="stat-card"><h3>Total Stock Cost</h3><p id="dash-naira">₦0</p></div>
-        <div class="stat-card"><h3>Expected Revenue</h3><p id="dash-cfa" style="color:var(--success)">0 CFA</p></div>
-        <div class="stat-card"><h3>Current Debt</h3><p id="dash-debt" style="color:var(--danger)">0 CFA</p></div>
-    </div>
-    <div class="main-grid">
-        <div class="form-section">
-            <h2 id="p-title" style="color: var(--primary-gold); margin: 0 0 15px 0;">Inventory Manager</h2>
-            <input type="text" id="p-batch" placeholder="Batch Name">
+    <div class="grid">
+        <div class="card" style="max-width: 420px;">
+            <h2>Inventory Manager</h2>
             <input type="text" id="p-name" placeholder="Product Name">
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="p-dozens" step="0.1" placeholder="Dozens">
-                <input type="number" id="p-price-naira" placeholder="Cost ₦">
-            </div>
+            <input type="number" id="p-dozens" step="0.1" placeholder="Dozens (Initial Stock)">
             <input type="number" id="p-sell-cfa" placeholder="Selling Price (CFA)">
-            <button class="btn-gold" onclick="saveProduct()">SAVE PRODUCT</button>
-            <hr style="border: 0.5px solid #333; margin: 25px 0;">
-            <h2 id="c-title" style="color: var(--primary-gold); margin: 0 0 15px 0;">New Transaction</h2>
+            <button class="btn btn-gold" onclick="saveProduct()">SAVE PRODUCT</button>
+            <hr style="margin: 30px 0; border: 0.5px solid #333;">
+            <h2>New Transaction</h2>
             <input type="text" id="c-name" placeholder="Customer Name">
-            <input type="text" id="c-phone" placeholder="Phone Number">
-            <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                <!-- Product Selection fixes -->
-                <input list="product-list" id="item-select" placeholder="Select Product..." onchange="handleProductSelect()">
-                <datalist id="product-list"></datalist>
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" id="item-qty" step="0.1" placeholder="Qty">
-                    <input type="number" id="item-price" placeholder="Price">
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                <input list="prod-list" id="sel-prod" placeholder="Search Product..." onchange="autoFillPrice()">
+                <datalist id="prod-list"></datalist>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="sel-qty" step="0.1" placeholder="Qty">
+                    <input type="number" id="sel-price" placeholder="Price (CFA)">
                 </div>
-                <button class="btn-gold" style="background:#333; color:var(--primary-gold); padding:10px;" onclick="addItemToTransaction()">+ Add to List</button>
+                <button class="btn" style="background:#333; color:var(--gold);" onclick="addToList()">+ ADD ITEM</button>
             </div>
-            <div class="pending-box" id="pending-items">No items selected.</div>
-            <input type="number" id="c-paid" placeholder="Amount Paid Now (CFA)">
-            <button class="btn-gold" style="background:var(--success); color:white;" onclick="saveCustomer()">CONFIRM & POST SALE</button>
+            <div id="item-queue"></div>
+            <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
+            <button class="btn btn-green" onclick="saveCustomer()">CONFIRM & POST SALE</button>
         </div>
-        <div class="table-section">
-            <div class="table-header"><h2>Customer Ledger</h2><input type="text" id="ledger-search" class="search-bar" placeholder="Search Customer..." oninput="renderUI()"></div>
-            <div class="table-container">
+        <div class="card">
+            <h2>Customer Ledger</h2>
+            <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Customer / Items</th><th>Debt (CFA)</th><th>Last Update</th><th>Actions</th></tr></thead>
-                    <tbody id="ledger-body"><tr><td colspan="4" style="text-align:center;">Loading ledger data...</td></tr></tbody>
+                    <thead><tr><th>Customer / Goods</th><th>Debt (CFA)</th><th>Action</th></tr></thead>
+                    <tbody id="ledger-body"></tbody>
                 </table>
             </div>
             <h2 style="margin-top: 40px;">Current Stock Status</h2>
-            <div class="table-container">
+            <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Product Name</th><th>Stock Level</th><th>Actions</th></tr></thead>
-                    <tbody id="inventory-body"></tbody>
+                    <thead><tr><th>Product Name</th><th>Stock Level</th><th>Action</th></tr></thead>
+                    <tbody id="stock-body"></tbody>
                 </table>
             </div>
         </div>
