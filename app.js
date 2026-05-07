@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
 });
 
-// --- DATA INITIALIZATION ---
 async function loadData() {
     try {
         const resP = await _db.from('products').select('*').order('name');
@@ -21,11 +20,11 @@ async function loadData() {
         updateBatchDropdown();
         renderUI();
     } catch (err) {
-        console.error("Critical Load Error:", err);
+        console.error("Data Load Error:", err);
     }
 }
 
-// --- BATCH MANAGEMENT ---
+// --- BATCH FILTERING ---
 function updateBatchDropdown() {
     const batches = [...new Set(inventory.map(p => p.batch_name))].filter(b => b);
     const select = document.getElementById('batch-filter');
@@ -43,7 +42,7 @@ window.switchBatch = () => {
 };
 
 window.startNewBatch = () => {
-    const name = prompt("Enter New Batch Name (e.g. November Batch 2025):");
+    const name = prompt("Enter New Batch Name (e.g. May Batch 2026):");
     if (name) {
         activeBatch = name;
         document.getElementById('p-batch').value = name;
@@ -52,21 +51,21 @@ window.startNewBatch = () => {
     }
 };
 
-// --- PRODUCT LOGIC ---
+// --- PRODUCT MANAGEMENT ---
 window.saveProduct = async function() {
-    const dozens = parseFloat(document.getElementById('p-dozens').value) || 0;
-    const priceN = parseFloat(document.getElementById('p-naira').value) || 0;
+    const doz = parseFloat(document.getElementById('p-dozens').value) || 0;
+    const nair = parseFloat(document.getElementById('p-naira').value) || 0;
     const sellC = parseFloat(document.getElementById('p-sell').value) || 0;
 
     const payload = {
         "batch_name": document.getElementById('p-batch').value,
         "name": document.getElementById('p-name').value,
-        "dozens": dozens,
-        "price_naira": priceN,
+        "dozens": doz,
+        "price_naira": nair,
         "cost_cfa": parseFloat(document.getElementById('p-cfa').value) || 0,
         "sell_price_cfa": sellC,
-        "total_naira": dozens * priceN,
-        "total_expected_cfa": dozens * sellC
+        "total_naira": doz * nair,
+        "total_expected_cfa": doz * sellC
     };
 
     let res = editingProdId 
@@ -77,7 +76,7 @@ window.saveProduct = async function() {
         clearProductForm();
         loadData();
     } else {
-        alert("Product Save Error: " + res.error.message);
+        alert("Product Error: " + res.error.message);
     }
 };
 
@@ -85,117 +84,95 @@ window.saveProduct = async function() {
 window.addToQueue = () => {
     const pNameInput = document.getElementById('sale-prod');
     const qQtyInput = document.getElementById('sale-qty');
-    const pName = pNameInput.value;
+    const p = inventory.find(x => x.name === pNameInput.value);
     const qty = parseFloat(qQtyInput.value) || 0;
-    const p = inventory.find(x => x.name === pName);
     
     if (p && qty > 0) {
         queue.push({ id: p.id, name: p.name, qty: qty, price: p.sell_price_cfa });
         document.getElementById('sale-queue').innerHTML = queue.map(i => `<div>• ${i.qty} ${i.name}</div>`).join('');
-        pNameInput.value = ''; 
-        qQtyInput.value = '';
+        pNameInput.value = ''; qQtyInput.value = '';
     } else {
-        alert("Select a valid product and quantity.");
+        alert("Invalid product or quantity.");
     }
 };
 
 window.saveCustomer = async function() {
-    const nameInput = document.getElementById('c-name');
-    const phoneInput = document.getElementById('c-phone');
-    const paidInput = document.getElementById('c-paid');
-    
-    const name = nameInput.value;
-    const phone = phoneInput.value;
-    const paid = parseFloat(paidInput.value) || 0;
+    const nIn = document.getElementById('c-name');
+    const pIn = document.getElementById('c-phone');
+    const paIn = document.getElementById('c-paid');
     const total = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
-    if (!name || queue.length === 0) {
-        return alert("Please add items to the basket and enter a customer name!");
-    }
+    if (!nIn.value || queue.length === 0) return alert("Add items and name!");
 
     const { error } = await _db.from('customers').insert([{
-        name: name,
-        phone: phone,
+        name: nIn.value,
+        phone: pIn.value,
         items_json: queue,
         total_amount: total,
-        amount_paid: paid,
-        balance: total - paid,
+        amount_paid: parseFloat(paIn.value) || 0,
+        balance: total - (parseFloat(paIn.value) || 0),
         updated_at: new Date().toISOString(),
-        batch_tag: activeBatch
+        batch_tag: activeBatch // This links the customer to the current view!
     }]);
 
     if (!error) {
         await updateStock(queue);
-        // Reset basket and form
-        queue = []; 
+        queue = [];
         document.getElementById('sale-queue').innerHTML = 'Basket empty...';
-        nameInput.value = '';
-        phoneInput.value = '';
-        paidInput.value = '';
+        nIn.value = ''; pIn.value = ''; paIn.value = '';
         loadData();
-        alert("Sale Complete! Form cleared for next entry.");
+        alert("Sale Complete & Form Reset.");
     } else {
-        alert("Error creating sale: " + error.message);
+        alert("Error: " + error.message);
     }
 };
 
 window.addToExistingCustomer = async function(id) {
-    if (queue.length === 0) {
-        return alert("INSTRUCTION: First, add the new items to the 'New Sale' basket above, THEN click this button to add them to this customer's account.");
-    }
+    if (queue.length === 0) return alert("Basket is empty! Add items first.");
     
     const c = customers.find(x => x.id === id);
     const addedTotal = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
     const newItems = [...(c.items_json || []), ...queue];
     const newTotal = (c.total_amount || 0) + addedTotal;
-    const newBalance = newTotal - (c.amount_paid || 0);
 
     const { error } = await _db.from('customers').update({
         items_json: newItems,
         total_amount: newTotal,
-        balance: newBalance,
+        balance: newTotal - (c.amount_paid || 0),
         updated_at: new Date().toISOString()
     }).eq('id', id);
 
     if (!error) {
         await updateStock(queue);
-        queue = []; 
+        queue = [];
         document.getElementById('sale-queue').innerHTML = 'Basket empty...';
         alert(`Account for ${c.name} updated!`);
         loadData();
     } else {
-        alert("Error updating account: " + error.message);
+        alert("Update Error: " + error.message);
     }
 };
 
 async function updateStock(items) {
     for (let item of items) {
         const p = inventory.find(x => x.id === item.id);
-        if (p) {
-            await _db.from('products').update({ 
-                sold_units: (p.sold_units || 0) + item.qty 
-            }).eq('id', p.id);
-        }
+        if (p) await _db.from('products').update({ sold_units: (p.sold_units || 0) + item.qty }).eq('id', p.id);
     }
 }
 
-// --- MANAGEMENT ACTIONS ---
+// --- UTILS ---
 window.editCustomerPayment = async function(id) {
     const c = customers.find(x => x.id === id);
-    const val = prompt(`Update Total Cash Paid by ${c.name}:`, c.amount_paid);
+    const val = prompt(`Update Cash Paid by ${c.name}:`, c.amount_paid);
     if (val !== null) {
         const paid = parseFloat(val) || 0;
-        await _db.from('customers').update({ 
-            amount_paid: paid, 
-            balance: c.total_amount - paid, 
-            updated_at: new Date().toISOString() 
-        }).eq('id', id);
+        await _db.from('customers').update({ amount_paid: paid, balance: c.total_amount - paid, updated_at: new Date().toISOString() }).eq('id', id);
         loadData();
     }
 };
 
 window.deleteCustomer = async function(id) {
-    if (confirm("Delete this entire sale record?")) {
+    if (confirm("Delete this sale?")) {
         await _db.from('customers').delete().eq('id', id);
         loadData();
     }
@@ -218,12 +195,11 @@ window.editProduct = (id) => {
 window.clearProductForm = () => {
     editingProdId = null;
     ['p-name', 'p-dozens', 'p-naira', 'p-cfa', 'p-sell'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('p-batch').value = (activeBatch === 'ALL') ? '' : activeBatch;
+    document.getElementById('p-batch').value = activeBatch === 'ALL' ? '' : activeBatch;
     document.getElementById('p-title').innerText = "📦 Product Registration";
     document.getElementById('p-cancel').classList.add('hidden');
 };
 
-// --- RENDER UI ---
 function renderUI() {
     const fInv = activeBatch === 'ALL' ? inventory : inventory.filter(p => p.batch_name === activeBatch);
     const fCust = activeBatch === 'ALL' ? customers : customers.filter(c => c.batch_tag === activeBatch);
@@ -236,7 +212,7 @@ function renderUI() {
     document.getElementById('p-list').innerHTML = fInv.map(i => `<option value="${i.name}">`).join('');
 
     document.getElementById('inventory-table').innerHTML = fInv.map(p => `
-        <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs">
+        <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs text-white">
             <td class="p-4"><span class="text-[10px] text-gray-500 font-mono">${p.batch_name}</span><br><strong>${p.name}</strong></td>
             <td class="p-4">${((p.dozens || 0) - (p.sold_units || 0)).toFixed(1)} <small>Doz</small></td>
             <td class="p-4 text-right font-mono">${(p.sell_price_cfa || 0).toLocaleString()}</td>
@@ -244,7 +220,7 @@ function renderUI() {
         </tr>`).join('');
 
     document.getElementById('customer-table').innerHTML = fCust.map(c => `
-        <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs">
+        <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs text-white">
             <td class="p-4"><strong>${c.name}</strong><br><span class="text-[10px] text-yellow-600 italic">${(c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ')}</span></td>
             <td class="p-4 text-gray-400 font-mono">${c.phone || '---'}</td>
             <td class="p-4 text-right font-mono">${(c.total_amount || 0).toLocaleString()}</td>
