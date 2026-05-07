@@ -12,52 +12,56 @@
         .gold-bg { background-color: #d4af37; }
         .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 12px; }
         input, select { background-color: #0d1117; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 8px; outline: none; width: 100%; font-size: 16px; }
-        input:focus { border-color: #d4af37; ring: 1px solid #d4af37; }
+        input:focus, select:focus { border-color: #d4af37; }
         .table-header { background-color: #0d1117; color: #8b949e; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
-        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-        
-        /* Responsive Table Fix */
-        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
-        @media (max-width: 640px) {
-            .hide-on-mobile { display: none; }
-            h1 { font-size: 1.5rem !important; }
-        }
+        .active-batch-pill { background: #d4af37; color: black; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body class="p-2 md:p-10">
 
-    <header class="text-center mb-6 md:mb-10">
+    <header class="text-center mb-6">
         <h1 class="text-3xl md:text-4xl font-bold gold-text tracking-tighter uppercase">AKUDON COSMETICS</h1>
-        <p class="text-gray-500 text-xs uppercase tracking-widest">Inventory & Sales Management</p>
+        <p class="text-gray-500 text-xs uppercase tracking-widest mb-4">Executive Inventory Terminal</p>
+        
+        <div class="flex flex-col md:flex-row justify-center items-center gap-4 bg-gray-900 p-4 rounded-xl border border-gray-800">
+            <div class="flex items-center gap-2">
+                <span class="text-gray-400 text-xs uppercase">Current View:</span>
+                <span id="current-batch-display" class="active-batch-pill">All Records</span>
+            </div>
+            <div class="flex gap-2">
+                <select id="batch-filter" onchange="switchBatch()" class="py-1 px-3 text-xs w-48">
+                    <option value="ALL">Show All Batches</option>
+                </select>
+                <button onclick="startNewBatch()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2 rounded font-bold uppercase tracking-tighter">+ New Entry</button>
+            </div>
+        </div>
     </header>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        <div class="card p-3 md:p-4 border-b-4 border-yellow-500">
+        <div class="card p-3 border-b-4 border-yellow-500">
             <h3 class="text-[10px] text-gray-400 uppercase">Stock (₦)</h3>
             <p id="total-naira" class="text-lg md:text-2xl font-bold font-mono">₦0</p>
         </div>
-        <div class="card p-3 md:p-4 border-b-4 border-yellow-600">
+        <div class="card p-3 border-b-4 border-yellow-600">
             <h3 class="text-[10px] text-gray-400 uppercase">Stock (CFA)</h3>
             <p id="total-cfa" class="text-lg md:text-2xl font-bold font-mono text-yellow-500">0</p>
         </div>
-        <div class="card p-3 md:p-4 border-b-4 border-green-600">
+        <div class="card p-3 border-b-4 border-green-600">
             <h3 class="text-[10px] text-gray-400 uppercase">Revenue</h3>
             <p id="expected-cfa" class="text-lg md:text-2xl font-bold font-mono text-green-400">0</p>
         </div>
-        <div class="card p-3 md:p-4 border-b-4 border-red-600">
+        <div class="card p-3 border-b-4 border-red-600">
             <h3 class="text-[10px] text-gray-400 uppercase">Debt</h3>
             <p id="total-debt" class="text-lg md:text-2xl font-bold font-mono text-red-500">0</p>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-        
         <div class="lg:col-span-4 space-y-6">
-            
             <section class="card p-5 shadow-2xl">
                 <h2 id="p-title" class="text-lg font-bold gold-text mb-4 uppercase">📦 Stock Entry</h2>
                 <div class="space-y-3">
-                    <input type="text" id="p-batch" placeholder="Batch (e.g. Oct-2024)">
+                    <input type="text" id="p-batch" placeholder="Batch Name (e.g. Nov 2025)">
                     <input type="text" id="p-name" placeholder="Product Name">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="number" id="p-dozens" placeholder="Qty (Doz)" step="0.1">
@@ -67,7 +71,7 @@
                         <input type="number" id="p-cfa" placeholder="Cost CFA">
                         <input type="number" id="p-sell" placeholder="Selling CFA">
                     </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded-lg uppercase tracking-tighter hover:opacity-90 transition">Save to Stock</button>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded-lg uppercase hover:opacity-90 transition">Save Product</button>
                     <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-xs py-2 rounded mt-2">Cancel Edit</button>
                 </div>
             </section>
@@ -77,27 +81,19 @@
                 <div class="space-y-3">
                     <input list="p-list" id="sale-prod" placeholder="Select Item...">
                     <datalist id="p-list"></datalist>
-                    
                     <input type="number" id="sale-qty" placeholder="Quantity">
                     <button onclick="addToQueue()" class="w-full bg-green-900 text-green-100 font-bold py-2 rounded text-xs uppercase">Add to Basket</button>
-                    
-                    <div id="sale-queue" class="bg-black p-3 rounded text-xs text-gray-400 min-h-[50px] border border-gray-800 italic">
-                        Basket is empty...
-                    </div>
-
+                    <div id="sale-queue" class="bg-black p-3 rounded text-xs text-gray-400 min-h-[50px] border border-gray-800 italic">Basket is empty...</div>
                     <hr class="border-gray-800 my-2">
-                    
                     <input type="text" id="c-name" placeholder="Customer Name">
-                    <input type="text" id="c-phone" placeholder="Customer Phone Number">
+                    <input type="text" id="c-phone" placeholder="Customer Phone">
                     <input type="number" id="c-paid" placeholder="Cash Paid (CFA)">
-                    
-                    <button onclick="saveCustomer()" class="w-full border-2 border-green-500 text-green-500 font-black py-3 rounded-lg uppercase tracking-tighter hover:bg-green-500 hover:text-black transition">Confirm Final Sale</button>
+                    <button onclick="saveCustomer()" class="w-full border-2 border-green-500 text-green-500 font-black py-3 rounded-lg uppercase tracking-tighter hover:bg-green-500 hover:text-black transition">Confirm Sale</button>
                 </div>
             </section>
         </div>
 
         <div class="lg:col-span-8 space-y-6">
-            
             <div class="card overflow-hidden">
                 <h2 class="p-4 font-bold text-xs gold-text border-b border-gray-800 uppercase tracking-widest">Customer Ledger</h2>
                 <div class="overflow-x-auto">
@@ -106,7 +102,6 @@
                             <tr>
                                 <th class="p-4">Customer/Products</th>
                                 <th class="p-4">Phone</th>
-                                <th class="p-4 hide-on-mobile">Last Paid</th>
                                 <th class="p-4 text-right">Total</th>
                                 <th class="p-4 text-right">Balance</th>
                                 <th class="p-4 text-center">Action</th>
@@ -137,11 +132,11 @@
     </div>
 
     <script>
-        // --- DATABASE CONFIG ---
         const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI';
         
         let _db, inventory = [], customers = [], queue = [], editingProdId = null;
+        let activeBatch = 'ALL';
 
         document.addEventListener('DOMContentLoaded', () => {
             _db = supabase.createClient(supabaseUrl, supabaseKey);
@@ -153,17 +148,49 @@
             const resC = await _db.from('customers').select('*').order('updated_at', { ascending: false });
             inventory = resP.data || [];
             customers = resC.data || [];
+            
+            updateBatchDropdown();
             renderUI();
         }
 
-        // --- PRODUCT LOGIC ---
+        function updateBatchDropdown() {
+            const batches = [...new Set(inventory.map(p => p.batch_name))].filter(b => b);
+            const select = document.getElementById('batch-filter');
+            select.innerHTML = '<option value="ALL">Show All Batches</option>' + 
+                               batches.map(b => `<option value="${b}">${b}</option>`).join('');
+            select.value = activeBatch;
+        }
+
+        window.switchBatch = () => {
+            activeBatch = document.getElementById('batch-filter').value;
+            document.getElementById('current-batch-display').innerText = activeBatch === 'ALL' ? 'All Records' : activeBatch;
+            renderUI();
+        };
+
+        window.startNewBatch = () => {
+            const name = prompt("Enter the name for the new entry (e.g. November Batch 2025):");
+            if (name) {
+                activeBatch = name;
+                document.getElementById('p-batch').value = name;
+                document.getElementById('current-batch-display').innerText = name;
+                // Add new batch to dropdown immediately
+                const select = document.getElementById('batch-filter');
+                const opt = document.createElement('option');
+                opt.value = name; opt.text = name;
+                select.add(opt);
+                select.value = name;
+                renderUI(); 
+            }
+        };
+
         window.saveProduct = async function() {
+            const batchName = document.getElementById('p-batch').value;
             const dozens = parseFloat(document.getElementById('p-dozens').value) || 0;
             const priceN = parseFloat(document.getElementById('p-naira').value) || 0;
             const sellC = parseFloat(document.getElementById('p-sell').value) || 0;
             
             const payload = {
-                "batch_name": document.getElementById('p-batch').value,
+                "batch_name": batchName,
                 "name": document.getElementById('p-name').value,
                 "dozens": dozens, "price_naira": priceN,
                 "cost_cfa": parseFloat(document.getElementById('p-cfa').value) || 0,
@@ -172,9 +199,85 @@
             };
 
             let res = editingProdId ? await _db.from('products').update(payload).eq('id', editingProdId) : await _db.from('products').insert([payload]);
-            if (res.error) alert(res.error.message); else { clearProductForm(); loadData(); }
+            if (!res.error) { clearProductForm(); activeBatch = batchName; loadData(); }
         };
 
+        window.saveCustomer = async function() {
+            const name = document.getElementById('c-name').value;
+            const phone = document.getElementById('c-phone').value;
+            const paid = parseFloat(document.getElementById('c-paid').value) || 0;
+            const total = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
+
+            // We tag the customer with the current active batch so they can be filtered
+            const { error } = await _db.from('customers').insert([{
+                name, phone, items_json: queue, total_amount: total, amount_paid: paid, 
+                balance: total - paid, updated_at: new Date().toISOString(),
+                batch_tag: activeBatch // New logic to link customers to batch
+            }]);
+
+            if (!error) {
+                for (let item of queue) {
+                    const p = inventory.find(x => x.id === item.id);
+                    if (p) await _db.from('products').update({ sold_units: (p.sold_units || 0) + item.qty }).eq('id', item.id);
+                }
+                queue = []; document.getElementById('sale-queue').innerHTML = 'Basket empty...';
+                ['c-name','c-phone','c-paid'].forEach(id => document.getElementById(id).value = '');
+                loadData();
+            }
+        };
+
+        function renderUI() {
+            // Filter both lists based on activeBatch
+            const filteredInv = activeBatch === 'ALL' ? inventory : inventory.filter(p => p.batch_name === activeBatch);
+            const filteredCust = activeBatch === 'ALL' ? customers : customers.filter(c => {
+                // If customer is tagged with batch, or if any item in their receipt belongs to the batch
+                if (c.batch_tag === activeBatch) return true;
+                return c.items_json?.some(item => {
+                    const prod = inventory.find(p => p.id === item.id);
+                    return prod && prod.batch_name === activeBatch;
+                });
+            });
+
+            // Update Stats based on filtered data
+            const tNaira = filteredInv.reduce((s, p) => s + (p.total_naira || 0), 0);
+            const tCfa = filteredInv.reduce((s, p) => s + ((p.dozens || 0) * (p.cost_cfa || 0)), 0);
+            const eCfa = filteredInv.reduce((s, p) => s + (p.total_expected_cfa || 0), 0);
+            const debt = filteredCust.reduce((s, c) => s + (c.balance || 0), 0);
+
+            document.getElementById('total-naira').innerText = "₦" + tNaira.toLocaleString();
+            document.getElementById('total-cfa').innerText = tCfa.toLocaleString();
+            document.getElementById('expected-cfa').innerText = eCfa.toLocaleString();
+            document.getElementById('total-debt').innerText = debt.toLocaleString();
+
+            // Populate Item Selection (Only items in current batch)
+            document.getElementById('p-list').innerHTML = filteredInv.map(i => `<option value="${i.name}">`).join('');
+
+            // Populate Tables
+            document.getElementById('inventory-table').innerHTML = filteredInv.map(p => `
+                <tr class="border-b border-gray-800 hover:bg-gray-900 transition text-xs">
+                    <td class="p-4"><span class="text-[10px] text-gray-500 font-mono">${p.batch_name}</span><br><strong>${p.name}</strong></td>
+                    <td class="p-4">${((p.dozens || 0) - (p.sold_units || 0)).toFixed(1)} <small>Doz</small></td>
+                    <td class="p-4 text-right font-mono">${(p.sell_price_cfa || 0).toLocaleString()}</td>
+                    <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 font-bold underline">Edit</button></td>
+                </tr>`).join('');
+
+            document.getElementById('customer-table').innerHTML = filteredCust.map(c => {
+                const items = (c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ');
+                return `
+                <tr class="border-b border-gray-800 hover:bg-gray-900 transition text-xs">
+                    <td class="p-4"><strong>${c.name}</strong><br><span class="text-[10px] text-yellow-600 italic">${items}</span></td>
+                    <td class="p-4 text-gray-400">${c.phone || '---'}</td>
+                    <td class="p-4 text-right font-mono">${(c.total_amount || 0).toLocaleString()}</td>
+                    <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-500'} font-mono">${(c.balance || 0).toLocaleString()}</td>
+                    <td class="p-4 text-center flex flex-col gap-1">
+                        <button onclick="editCustomerPayment(${c.id})" class="bg-yellow-600 text-black px-2 py-1 rounded text-[10px] font-black uppercase">Pay</button>
+                        <button onclick="deleteCustomer(${c.id})" class="text-red-900 text-[10px] font-bold uppercase">Del</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Re-use previous helper functions
         window.editProduct = (id) => {
             const p = inventory.find(x => x.id === id);
             if (!p) return;
@@ -187,10 +290,14 @@
             document.getElementById('p-cfa').value = p.cost_cfa;
             document.getElementById('p-sell').value = p.sell_price_cfa;
             document.getElementById('p-cancel').classList.remove('hidden');
-            window.scrollTo({top: 0, behavior: 'smooth'});
         };
-
-        // --- SALES LOGIC ---
+        window.clearProductForm = () => {
+            editingProdId = null;
+            ['p-name','p-dozens','p-naira','p-cfa','p-sell'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('p-batch').value = activeBatch === 'ALL' ? '' : activeBatch;
+            document.getElementById('p-title').innerText = "📦 Stock Entry";
+            document.getElementById('p-cancel').classList.add('hidden');
+        };
         window.addToQueue = () => {
             const pName = document.getElementById('sale-prod').value;
             const qty = parseFloat(document.getElementById('sale-qty').value) || 0;
@@ -198,35 +305,9 @@
             if (p && qty > 0) {
                 queue.push({ id: p.id, name: p.name, qty: qty, price: p.sell_price_cfa });
                 document.getElementById('sale-queue').innerHTML = queue.map(i => `<div>• ${i.qty} ${i.name}</div>`).join('');
-                document.getElementById('sale-prod').value = ''; 
-                document.getElementById('sale-qty').value = '';
+                document.getElementById('sale-prod').value = ''; document.getElementById('sale-qty').value = '';
             }
         };
-
-        window.saveCustomer = async function() {
-            const name = document.getElementById('c-name').value;
-            const phone = document.getElementById('c-phone').value;
-            const paid = parseFloat(document.getElementById('c-paid').value) || 0;
-            const total = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
-
-            if (!name || queue.length === 0) return alert("Missing name or items!");
-
-            const { error } = await _db.from('customers').insert([{
-                name, phone, items_json: queue, total_amount: total, amount_paid: paid, balance: total - paid, updated_at: new Date().toISOString()
-            }]);
-
-            if (!error) {
-                for (let item of queue) {
-                    const p = inventory.find(x => x.id === item.id);
-                    if (p) await _db.from('products').update({ sold_units: (p.sold_units || 0) + item.qty }).eq('id', item.id);
-                }
-                queue = []; 
-                document.getElementById('sale-queue').innerHTML = 'Basket empty...';
-                ['c-name','c-phone','c-paid'].forEach(id => document.getElementById(id).value = '');
-                loadData();
-            }
-        };
-
         window.editCustomerPayment = async function(id) {
             const c = customers.find(x => x.id === id);
             const val = prompt(`Update TOTAL amount paid by ${c.name}:`, c.amount_paid);
@@ -236,67 +317,11 @@
                 loadData();
             }
         };
-
         window.deleteCustomer = async function(id) {
-            const c = customers.find(x => x.id === id);
-            if (confirm("Delete sale and return stock to shelf?")) {
-                if (c.items_json) {
-                    for (let item of c.items_json) {
-                        const p = inventory.find(x => x.id === item.id);
-                        if (p) await _db.from('products').update({ sold_units: Math.max(0, (p.sold_units || 0) - item.qty) }).eq('id', p.id);
-                    }
-                }
+            if (confirm("Delete sale?")) {
                 await _db.from('customers').delete().eq('id', id);
                 loadData();
             }
-        };
-
-        // --- UI RENDER ---
-        function renderUI() {
-            // Stats
-            const tNaira = inventory.reduce((s, p) => s + (p.total_naira || 0), 0);
-            const tCfa = inventory.reduce((s, p) => s + ((p.dozens || 0) * (p.cost_cfa || 0)), 0);
-            const eCfa = inventory.reduce((s, p) => s + (p.total_expected_cfa || 0), 0);
-            const debt = customers.reduce((s, c) => s + (c.balance || 0), 0);
-
-            document.getElementById('total-naira').innerText = "₦" + tNaira.toLocaleString();
-            document.getElementById('total-cfa').innerText = tCfa.toLocaleString();
-            document.getElementById('expected-cfa').innerText = eCfa.toLocaleString();
-            document.getElementById('total-debt').innerText = debt.toLocaleString();
-
-            document.getElementById('p-list').innerHTML = inventory.map(i => `<option value="${i.name}">`).join('');
-            
-            document.getElementById('inventory-table').innerHTML = inventory.map(p => `
-                <tr class="border-b border-gray-800 hover:bg-gray-900 transition">
-                    <td class="p-4"><span class="text-[10px] text-gray-500 font-mono uppercase">${p.batch_name}</span><br><strong>${p.name}</strong></td>
-                    <td class="p-4">${((p.dozens || 0) - (p.sold_units || 0)).toFixed(1)} <small class="text-gray-500">Doz</small></td>
-                    <td class="p-4 text-right font-mono">${(p.sell_price_cfa || 0).toLocaleString()}</td>
-                    <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 font-bold underline">Edit</button></td>
-                </tr>`).join('');
-
-            document.getElementById('customer-table').innerHTML = customers.map(c => {
-                const items = (c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ');
-                const date = new Date(c.updated_at).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-                return `
-                <tr class="border-b border-gray-800 hover:bg-gray-900 transition">
-                    <td class="p-4"><strong>${c.name}</strong><br><span class="text-[10px] text-yellow-600 italic">${items || 'No data'}</span></td>
-                    <td class="p-4 text-gray-300 font-mono text-xs">${c.phone || '---'}</td>
-                    <td class="p-4 hide-on-mobile text-gray-500 text-[10px]">${date}</td>
-                    <td class="p-4 text-right font-mono text-xs">${(c.total_amount || 0).toLocaleString()}</td>
-                    <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-500'} font-mono">${(c.balance || 0).toLocaleString()}</td>
-                    <td class="p-4 text-center flex flex-col space-y-1">
-                        <button onclick="editCustomerPayment(${c.id})" class="bg-yellow-600 text-black px-2 py-1 rounded text-[10px] font-black uppercase">Pay</button>
-                        <button onclick="deleteCustomer(${c.id})" class="text-red-900 text-[10px] font-bold uppercase">Del</button>
-                    </td>
-                </tr>`;
-            }).join('');
-        }
-
-        window.clearProductForm = () => {
-            editingProdId = null;
-            ['p-batch','p-name','p-dozens','p-naira','p-cfa','p-sell'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('p-title').innerText = "📦 Stock Entry";
-            document.getElementById('p-cancel').classList.add('hidden');
         };
     </script>
 </body>
