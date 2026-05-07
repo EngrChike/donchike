@@ -16,7 +16,6 @@ async function loadData() {
     renderUI();
 }
 
-// Global functions for HTML access
 window.saveProduct = async function() {
     const dozens = parseFloat(document.getElementById('p-dozens').value) || 0;
     const priceNaira = parseFloat(document.getElementById('p-naira').value) || 0;
@@ -64,20 +63,28 @@ window.saveCustomer = async function() {
     const paid = parseFloat(document.getElementById('c-paid').value) || 0;
     const total = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
-    if (!name || queue.length === 0) return alert("Missing info!");
+    if (!name || queue.length === 0) return alert("Please enter a name and items!");
 
     const { error } = await _db.from('customers').insert([{
-        name, phone, items_json: queue, total_amount: total, amount_paid: paid, balance: total - paid, updated_at: new Date().toISOString()
+        name: name,
+        phone: phone, 
+        items_json: queue,
+        total_amount: total,
+        amount_paid: paid,
+        balance: total - paid,
+        updated_at: new Date().toISOString()
     }]);
 
     if (!error) {
         for (let item of queue) {
             const p = inventory.find(x => x.id === item.id);
-            await _db.from('products').update({ sold_units: (p.sold_units || 0) + item.qty }).eq('id', item.id);
+            if (p) await _db.from('products').update({ sold_units: (p.sold_units || 0) + item.qty }).eq('id', item.id);
         }
         queue = []; document.getElementById('sale-queue').innerHTML = 'Queue empty...';
         document.getElementById('c-name').value = ''; document.getElementById('c-phone').value = ''; document.getElementById('c-paid').value = '';
         loadData();
+    } else {
+        alert("Error: " + error.message);
     }
 };
 
@@ -106,7 +113,6 @@ window.deleteCustomer = async function(id) {
 };
 
 function renderUI() {
-    // Totals logic remains same as before...
     const tNaira = inventory.reduce((s, p) => s + (p.total_naira || 0), 0);
     const tCfa = inventory.reduce((s, p) => s + ((p.dozens || 0) * (p.cost_cfa || 0)), 0);
     const eCfa = inventory.reduce((s, p) => s + (p.total_expected_cfa || 0), 0);
@@ -117,7 +123,6 @@ function renderUI() {
     document.getElementById('expected-cfa').innerText = eCfa.toLocaleString() + " CFA";
     document.getElementById('total-debt').innerText = debt.toLocaleString() + " CFA";
 
-    // Update Tables
     document.getElementById('p-list').innerHTML = inventory.map(i => `<option value="${i.name}">`).join('');
     
     document.getElementById('inventory-table').innerHTML = inventory.map(p => `
@@ -129,9 +134,7 @@ function renderUI() {
         </tr>`).join('');
 
     document.getElementById('customer-table').innerHTML = customers.map(c => {
-        // Format the Item List for display
         const itemsList = (c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ');
-        // Format Date
         const date = new Date(c.updated_at).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
 
         return `
@@ -140,7 +143,7 @@ function renderUI() {
                 <strong>${c.name}</strong><br>
                 <small class="text-yellow-600 italic text-xs">${itemsList || 'No items'}</small>
             </td>
-            <td class="p-4 text-gray-400 font-mono text-xs">${c.phone || 'N/A'}</td>
+            <td class="p-4 text-gray-300 font-mono text-sm">${c.phone || '---'}</td>
             <td class="p-4 text-gray-500 text-xs">${date}</td>
             <td class="p-4 text-right font-mono">${(c.total_amount || 0).toLocaleString()}</td>
             <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-500'} font-mono">${(c.balance || 0).toLocaleString()}</td>
