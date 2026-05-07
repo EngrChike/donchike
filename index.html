@@ -7,13 +7,29 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #0a0a0a; color: #e5e7eb; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #0a0a0a; color: #e5e7eb; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .gold-text { color: #d4af37; }
         .gold-bg { background-color: #d4af37; }
         .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 12px; }
-        input, select { background-color: #0d1117; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 6px; outline: none; width: 100%; }
+        
+        input, select { 
+            background-color: #0d1117; 
+            border: 1px solid #30363d; 
+            color: white; 
+            padding: 10px; 
+            border-radius: 6px; 
+            outline: none; 
+            width: 100%;
+        }
         input:focus { border-color: #d4af37; }
+        
         .table-header { background-color: #0d1117; color: #8b949e; text-transform: uppercase; font-size: 0.75rem; }
+        
+        /* Custom scrollbar for a premium look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d4af37; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -47,7 +63,7 @@
         <div class="lg:col-span-4 space-y-6">
             
             <section class="card p-6 shadow-2xl">
-                <h2 id="p-title" class="text-xl font-bold gold-text mb-4">📦 Stock Entry</h2>
+                <h2 id="p-title" class="text-xl font-bold gold-text mb-4 flex items-center">📦 Stock Entry</h2>
                 <div class="space-y-3">
                     <input type="text" id="p-batch" placeholder="Batch Name">
                     <input type="text" id="p-name" placeholder="Product Name">
@@ -59,27 +75,28 @@
                         <input type="number" id="p-cfa" placeholder="Cost CFA">
                         <input type="number" id="p-sell" placeholder="Sell CFA">
                     </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-bold py-3 rounded-lg uppercase tracking-widest">Save Product</button>
-                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-xs py-2 rounded">Cancel Edit</button>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-extrabold py-3 rounded-lg uppercase tracking-widest hover:opacity-90 transition">Save Product</button>
+                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-xs py-2 rounded mt-2">Cancel Edit</button>
                 </div>
             </section>
 
             <section class="card p-6 shadow-2xl border-t-4 border-green-600">
-                <h2 class="text-xl font-bold text-green-500 mb-4">💸 Sale Recording</h2>
+                <h2 class="text-xl font-bold text-green-500 mb-4 flex items-center">💸 Sale Recording</h2>
                 <div class="space-y-3">
-                    <input list="p-list" id="sale-prod" placeholder="Select Product">
+                    <input list="p-list" id="sale-prod" placeholder="Search Product...">
                     <datalist id="p-list"></datalist>
+                    
                     <input type="number" id="sale-qty" placeholder="Quantity to sell">
                     <button onclick="addToQueue()" class="w-full bg-green-700 text-white font-bold py-2 rounded text-sm uppercase">Add to Sale Queue</button>
                     
-                    <div id="sale-queue" class="bg-black p-3 rounded text-xs text-gray-400 min-h-[50px] border border-gray-800">
-                        Queue empty...
+                    <div id="sale-queue" class="bg-black p-3 rounded text-xs text-gray-400 min-h-[60px] border border-gray-800 italic">
+                        No items added to current sale...
                     </div>
 
                     <hr class="border-gray-800 my-2">
                     
                     <input type="text" id="c-name" placeholder="Customer Name">
-                    <input type="text" id="c-phone" placeholder="Phone Number">
+                    <input type="text" id="c-phone" placeholder="Customer Phone Number">
                     <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
                     
                     <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded-lg uppercase tracking-widest hover:bg-green-500 hover:text-black transition">Complete Transaction</button>
@@ -88,39 +105,45 @@
         </div>
 
         <div class="lg:col-span-8 space-y-8">
+            
             <div class="card overflow-hidden">
-                <h2 class="p-4 font-bold text-sm gold-text border-b border-gray-800 uppercase">Customer Ledger</h2>
+                <h2 class="p-4 font-bold text-sm gold-text border-b border-gray-800 uppercase tracking-widest">Customer Ledger</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="table-header">
                             <tr>
-                                <th class="p-4">Customer / Contact</th>
+                                <th class="p-4">Customer & Items</th>
+                                <th class="p-4">Contact</th>
+                                <th class="p-4">Last Payment</th>
                                 <th class="p-4 text-right">Total</th>
                                 <th class="p-4 text-right">Balance</th>
                                 <th class="p-4 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="customer-table"></tbody>
+                        <tbody id="customer-table">
+                            </tbody>
                     </table>
                 </div>
             </div>
 
             <div class="card overflow-hidden">
-                <h2 class="p-4 font-bold text-sm gold-text border-b border-gray-800 uppercase">Inventory Stock</h2>
+                <h2 class="p-4 font-bold text-sm gold-text border-b border-gray-800 uppercase tracking-widest">Inventory Stock</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="table-header">
                             <tr>
                                 <th class="p-4">Batch/Product</th>
                                 <th class="p-4">Stock</th>
-                                <th class="p-4 text-right">Price</th>
+                                <th class="p-4 text-right">Price (CFA)</th>
                                 <th class="p-4 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="inventory-table"></tbody>
+                        <tbody id="inventory-table">
+                            </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </div>
 
