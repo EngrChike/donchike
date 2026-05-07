@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AkuDon Executive Terminal</title>
+    <title>AkuDon Secure Terminal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -14,6 +14,7 @@
         input, select { background-color: #0d1117; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
         input:focus { border-color: #d4af37; }
         .active-batch-pill { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 100%); color: #000; padding: 4px 12px; border-radius: 50px; font-weight: 800; font-size: 11px; }
+        .secure-lock { border-left: 3px solid #ef4444; } /* Visual indicator for restricted areas */
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -68,7 +69,7 @@
                         <input type="number" id="p-cfa" placeholder="Cost CFA">
                         <input type="number" id="p-sell" placeholder="Sell CFA">
                     </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Save Product</button>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Save/Update Product</button>
                     <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-[10px] mt-2 py-1 rounded">Cancel Edit</button>
                 </div>
             </div>
@@ -94,11 +95,14 @@
 
         <div class="lg:col-span-8 space-y-6">
             <div class="card overflow-hidden">
-                <div class="p-3 bg-gray-900 border-b border-gray-800"><h2 class="text-[10px] font-black gold-text uppercase">Customer Accounts</h2></div>
+                <div class="p-3 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="text-[10px] font-black gold-text uppercase">Customer Accounts Ledger</h2>
+                    <span class="text-[8px] text-gray-500 uppercase">Secure Area 🔒</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
                         <thead class="bg-black text-gray-500 uppercase">
-                            <tr><th class="p-4">Customer</th><th class="p-4">Phone</th><th class="p-4 text-right">Total</th><th class="p-4 text-right">Balance</th><th class="p-4 text-center">Actions</th></tr>
+                            <tr><th class="p-4">Customer Details</th><th class="p-4">Phone</th><th class="p-4 text-right">Total</th><th class="p-4 text-right">Balance</th><th class="p-4 text-center">Actions</th></tr>
                         </thead>
                         <tbody id="customer-table" class="divide-y divide-gray-800"></tbody>
                     </table>
@@ -106,11 +110,14 @@
             </div>
 
             <div class="card overflow-hidden">
-                <div class="p-3 bg-gray-900 border-b border-gray-800"><h2 class="text-[10px] font-black gold-text uppercase">Stock Inventory</h2></div>
+                <div class="p-3 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="text-[10px] font-black gold-text uppercase">Stock Inventory</h2>
+                    <span class="text-[8px] text-gray-500 uppercase">Secure Area 🔒</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
                         <thead class="bg-black text-gray-500 uppercase">
-                            <tr><th class="p-4">Item</th><th class="p-4">Remaining</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Edit</th></tr>
+                            <tr><th class="p-4">Item Name</th><th class="p-4">Remaining</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Actions</th></tr>
                         </thead>
                         <tbody id="inventory-table" class="divide-y divide-gray-800"></tbody>
                     </table>
