@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
 });
 
+// --- LOAD DATA FROM DATABASE ---
 async function loadData() {
     try {
         const resP = await _db.from('products').select('*').order('name');
@@ -24,12 +25,13 @@ async function loadData() {
     }
 }
 
-// --- BATCH FILTERING ---
+// --- BATCH FILTERING SYSTEM ---
 function updateBatchDropdown() {
+    // Get unique batch names from products
     const batches = [...new Set(inventory.map(p => p.batch_name))].filter(b => b);
     const select = document.getElementById('batch-filter');
     if (select) {
-        select.innerHTML = '<option value="ALL">Show All Batches</option>' + 
+        select.innerHTML = '<option value="ALL">Show All Batches (Master View)</option>' + 
                            batches.map(b => `<option value="${b}">${b}</option>`).join('');
         select.value = activeBatch;
     }
@@ -38,7 +40,7 @@ function updateBatchDropdown() {
 window.switchBatch = () => {
     activeBatch = document.getElementById('batch-filter').value;
     document.getElementById('current-batch-display').innerText = activeBatch === 'ALL' ? 'ALL RECORDS' : activeBatch;
-    renderUI();
+    renderUI(); // This will now filter both Products and Customers
 };
 
 window.startNewBatch = () => {
@@ -51,7 +53,7 @@ window.startNewBatch = () => {
     }
 };
 
-// --- PRODUCT MANAGEMENT ---
+// --- PRODUCT REGISTRATION ---
 window.saveProduct = async function() {
     const doz = parseFloat(document.getElementById('p-dozens').value) || 0;
     const nair = parseFloat(document.getElementById('p-naira').value) || 0;
@@ -90,9 +92,10 @@ window.addToQueue = () => {
     if (p && qty > 0) {
         queue.push({ id: p.id, name: p.name, qty: qty, price: p.sell_price_cfa });
         document.getElementById('sale-queue').innerHTML = queue.map(i => `<div>• ${i.qty} ${i.name}</div>`).join('');
-        pNameInput.value = ''; qQtyInput.value = '';
+        pNameInput.value = ''; 
+        qQtyInput.value = '';
     } else {
-        alert("Invalid product or quantity.");
+        alert("Select a product and valid quantity first!");
     }
 };
 
@@ -102,7 +105,7 @@ window.saveCustomer = async function() {
     const paIn = document.getElementById('c-paid');
     const total = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
-    if (!nIn.value || queue.length === 0) return alert("Add items and name!");
+    if (!nIn.value || queue.length === 0) return alert("Missing items or customer name!");
 
     const { error } = await _db.from('customers').insert([{
         name: nIn.value,
@@ -112,23 +115,24 @@ window.saveCustomer = async function() {
         amount_paid: parseFloat(paIn.value) || 0,
         balance: total - (parseFloat(paIn.value) || 0),
         updated_at: new Date().toISOString(),
-        batch_tag: activeBatch // This links the customer to the current view!
+        batch_tag: activeBatch // CRITICAL: Tags the customer to the current batch
     }]);
 
     if (!error) {
         await updateStock(queue);
         queue = [];
         document.getElementById('sale-queue').innerHTML = 'Basket empty...';
+        // Clear forms for next customer
         nIn.value = ''; pIn.value = ''; paIn.value = '';
         loadData();
-        alert("Sale Complete & Form Reset.");
+        alert("Sale saved successfully for " + activeBatch);
     } else {
-        alert("Error: " + error.message);
+        alert("Database Error: " + error.message);
     }
 };
 
 window.addToExistingCustomer = async function(id) {
-    if (queue.length === 0) return alert("Basket is empty! Add items first.");
+    if (queue.length === 0) return alert("Basket is empty! Add new items first.");
     
     const c = customers.find(x => x.id === id);
     const addedTotal = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
@@ -146,7 +150,7 @@ window.addToExistingCustomer = async function(id) {
         await updateStock(queue);
         queue = [];
         document.getElementById('sale-queue').innerHTML = 'Basket empty...';
-        alert(`Account for ${c.name} updated!`);
+        alert(`Account updated for ${c.name}`);
         loadData();
     } else {
         alert("Update Error: " + error.message);
@@ -160,19 +164,23 @@ async function updateStock(items) {
     }
 }
 
-// --- UTILS ---
+// --- MANAGEMENT UTILS ---
 window.editCustomerPayment = async function(id) {
     const c = customers.find(x => x.id === id);
-    const val = prompt(`Update Cash Paid by ${c.name}:`, c.amount_paid);
+    const val = prompt(`Enter Total Cash Paid by ${c.name}:`, c.amount_paid);
     if (val !== null) {
         const paid = parseFloat(val) || 0;
-        await _db.from('customers').update({ amount_paid: paid, balance: c.total_amount - paid, updated_at: new Date().toISOString() }).eq('id', id);
+        await _db.from('customers').update({ 
+            amount_paid: paid, 
+            balance: c.total_amount - paid, 
+            updated_at: new Date().toISOString() 
+        }).eq('id', id);
         loadData();
     }
 };
 
 window.deleteCustomer = async function(id) {
-    if (confirm("Delete this sale?")) {
+    if (confirm("Delete this sale forever?")) {
         await _db.from('customers').delete().eq('id', id);
         loadData();
     }
@@ -200,17 +208,24 @@ window.clearProductForm = () => {
     document.getElementById('p-cancel').classList.add('hidden');
 };
 
+// --- RENDER UI (STRICT FILTERING) ---
 function renderUI() {
+    // 1. Filter Inventory based on batch
     const fInv = activeBatch === 'ALL' ? inventory : inventory.filter(p => p.batch_name === activeBatch);
+    
+    // 2. Filter Customers based on batch
     const fCust = activeBatch === 'ALL' ? customers : customers.filter(c => c.batch_tag === activeBatch);
 
+    // Update Stats Card
     document.getElementById('total-naira').innerText = "₦" + fInv.reduce((s, p) => s + (p.total_naira || 0), 0).toLocaleString();
     document.getElementById('total-cfa').innerText = fInv.reduce((s, p) => s + ((p.dozens || 0) * (p.cost_cfa || 0)), 0).toLocaleString();
     document.getElementById('expected-cfa').innerText = fInv.reduce((s, p) => s + (p.total_expected_cfa || 0), 0).toLocaleString();
     document.getElementById('total-debt').innerText = fCust.reduce((s, c) => s + (c.balance || 0), 0).toLocaleString();
 
+    // Update Product Dropdown for Sales
     document.getElementById('p-list').innerHTML = fInv.map(i => `<option value="${i.name}">`).join('');
 
+    // Render Inventory Table
     document.getElementById('inventory-table').innerHTML = fInv.map(p => `
         <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs text-white">
             <td class="p-4"><span class="text-[10px] text-gray-500 font-mono">${p.batch_name}</span><br><strong>${p.name}</strong></td>
@@ -219,6 +234,7 @@ function renderUI() {
             <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 font-bold underline">Edit</button></td>
         </tr>`).join('');
 
+    // Render Customer Ledger (Now Batch-Specific)
     document.getElementById('customer-table').innerHTML = fCust.map(c => `
         <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs text-white">
             <td class="p-4"><strong>${c.name}</strong><br><span class="text-[10px] text-yellow-600 italic">${(c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ')}</span></td>
