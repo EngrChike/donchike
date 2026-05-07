@@ -4,242 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AkuDon Executive Terminal</title>
-    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
-        /* Luxury Dark Theme Styling */
-        body { 
-            background-color: #0a0a0a; 
-            color: #e5e7eb; 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-        }
-        
+        body { background-color: #0a0a0a; color: #e5e7eb; font-family: sans-serif; }
         .gold-text { color: #d4af37; }
         .gold-bg { background-color: #d4af37; }
-        
-        .card { 
-            background-color: #161b22; 
-            border: 1px solid #30363d; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        
-        /* Premium Input Styles */
-        input, select { 
-            background-color: #0d1117; 
-            border: 1px solid #30363d; 
-            color: white; 
-            padding: 14px; 
-            border-radius: 8px; 
-            outline: none; 
-            width: 100%; 
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-        
-        input:focus, select:focus { 
-            border-color: #d4af37; 
-            box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
-        }
-        
-        /* Table Aesthetics */
-        .table-header { 
-            background-color: #0d1117; 
-            color: #8b949e; 
-            text-transform: uppercase; 
-            font-size: 0.75rem; 
-            letter-spacing: 0.1em;
-            font-weight: 700;
-        }
-        
-        .active-batch-pill { 
-            background: linear-gradient(135deg, #d4af37 0%, #f9e29c 100%);
-            color: #000; 
-            padding: 6px 16px; 
-            border-radius: 50px; 
-            font-weight: 800; 
-            font-size: 12px;
-            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.4);
-        }
-
-        /* Mobile Optimization */
-        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
-        @media (max-width: 768px) {
-            .stats-text { font-size: 1.1rem !important; }
-            h1 { font-size: 1.5rem !important; }
-        }
+        .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 12px; }
+        input, select { background-color: #0d1117; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
+        input:focus { border-color: #d4af37; }
+        .active-batch-pill { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 100%); color: #000; padding: 4px 12px; border-radius: 50px; font-weight: 800; font-size: 11px; }
     </style>
 </head>
-<body class="p-2 md:p-10">
+<body class="p-4 md:p-8">
 
     <header class="text-center mb-8">
-        <h1 class="text-3xl md:text-5xl font-extrabold gold-text tracking-tighter uppercase mb-2">AKUDON COSMETICS</h1>
-        <p class="text-gray-500 text-xs uppercase tracking-widest mb-6">Inventory & Sales Executive Terminal</p>
-        
-        <div class="max-w-3xl mx-auto flex flex-col md:flex-row justify-center items-center gap-4 bg-gray-900 p-5 rounded-2xl border border-gray-800">
-            <div class="flex items-center gap-3">
-                <span class="text-gray-400 text-xs uppercase font-bold">Active Entry:</span>
+        <h1 class="text-4xl font-black gold-text tracking-tighter uppercase">AKUDON COSMETICS</h1>
+        <div class="max-w-4xl mx-auto mt-4 bg-gray-900 p-4 rounded-xl border border-gray-800">
+            <div class="flex flex-wrap justify-center items-center gap-4 mb-4">
+                <span class="text-[10px] uppercase font-bold text-gray-500">Current View:</span>
                 <span id="current-batch-display" class="active-batch-pill">ALL RECORDS</span>
+                <select id="batch-filter" onchange="switchBatch()" class="w-48 text-xs"></select>
             </div>
-            <div class="flex gap-2 w-full md:w-auto">
-                <select id="batch-filter" onchange="switchBatch()" class="py-2 px-4 text-xs bg-black border-gray-700"></select>
-                <button onclick="startNewBatch()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-6 py-2 rounded-lg font-black uppercase tracking-widest transition-all">
-                    + New Batch
-                </button>
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="startNewBatch()" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded font-bold uppercase">+ New Batch</button>
+                <button onclick="renameCurrentBatch()" class="bg-yellow-600 text-black text-[10px] px-4 py-2 rounded font-bold uppercase">Rename</button>
+                <button onclick="deleteCurrentBatch()" class="bg-red-900 text-white text-[10px] px-4 py-2 rounded font-bold uppercase">Delete Batch</button>
             </div>
         </div>
     </header>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        <div class="card p-4 border-l-4 border-yellow-500">
-            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Stock (₦)</h3>
-            <p id="total-naira" class="stats-text text-2xl font-bold font-mono gold-text">₦0</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-6xl mx-auto">
+        <div class="card p-4 text-center border-l-4 border-yellow-500">
+            <h3 class="text-[9px] uppercase text-gray-500">Total Stock (₦)</h3>
+            <p id="total-naira" class="text-xl font-bold gold-text">₦0</p>
         </div>
-        <div class="card p-4 border-l-4 border-yellow-600">
-            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Cost Value (CFA)</h3>
-            <p id="total-cfa" class="stats-text text-2xl font-bold font-mono text-yellow-500">0</p>
+        <div class="card p-4 text-center border-l-4 border-yellow-600">
+            <h3 class="text-[9px] uppercase text-gray-500">Cost (CFA)</h3>
+            <p id="total-cfa" class="text-xl font-bold">0</p>
         </div>
-        <div class="card p-4 border-l-4 border-green-600">
-            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Expected Revenue</h3>
-            <p id="expected-cfa" class="stats-text text-2xl font-bold font-mono text-green-400">0</p>
+        <div class="card p-4 text-center border-l-4 border-green-600">
+            <h3 class="text-[9px] uppercase text-gray-500">Revenue (CFA)</h3>
+            <p id="expected-cfa" class="text-xl font-bold text-green-400">0</p>
         </div>
-        <div class="card p-4 border-l-4 border-red-600">
-            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Debt</h3>
-            <p id="total-debt" class="stats-text text-2xl font-bold font-mono text-red-500">0</p>
+        <div class="card p-4 text-center border-l-4 border-red-600">
+            <h3 class="text-[9px] uppercase text-gray-500">Total Debt</h3>
+            <p id="total-debt" class="text-xl font-bold text-red-500">0</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <div class="lg:col-span-4 space-y-8">
-            
-            <section class="card p-6 border-t-4 border-yellow-500">
-                <h2 id="p-title" class="text-xl font-black gold-text mb-5 uppercase flex items-center gap-2">
-                    📦 Product Registration
-                </h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Target Batch</label>
-                        <input type="text" id="p-batch" placeholder="Batch Name (e.g. Nov 2025)">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
+        <div class="lg:col-span-4 space-y-6">
+            <div class="card p-6">
+                <h2 id="p-title" class="gold-text font-black uppercase text-sm mb-4">📦 Product Entry</h2>
+                <div class="space-y-3">
+                    <input type="text" id="p-batch" placeholder="Batch Name" readonly class="opacity-50">
+                    <input type="text" id="p-name" placeholder="Product Name">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="p-dozens" placeholder="Qty (Doz)">
+                        <input type="number" id="p-naira" placeholder="Price ₦">
                     </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Item Name</label>
-                        <input type="text" id="p-name" placeholder="Name of Cosmetics">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="p-cfa" placeholder="Cost CFA">
+                        <input type="number" id="p-sell" placeholder="Sell CFA">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-[10px] text-gray-500 uppercase ml-1">Qty (Dozens)</label>
-                            <input type="number" id="p-dozens" placeholder="0.0" step="0.1">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-500 uppercase ml-1">Price ₦</label>
-                            <input type="number" id="p-naira" placeholder="0">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-[10px] text-gray-500 uppercase ml-1">Cost CFA</label>
-                            <input type="number" id="p-cfa" placeholder="0">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-500 uppercase ml-1">Sell CFA</label>
-                            <input type="number" id="p-sell" placeholder="0">
-                        </div>
-                    </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:opacity-90 shadow-lg transition-all">
-                        Register Product
-                    </button>
-                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-xs py-2 rounded-lg font-bold uppercase">
-                        Cancel Edit
-                    </button>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Save Product</button>
+                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-[10px] mt-2 py-1 rounded">Cancel Edit</button>
                 </div>
-            </section>
+            </div>
 
-            <section class="card p-6 border-t-4 border-green-500">
-                <h2 class="text-xl font-black text-green-500 mb-5 uppercase flex items-center gap-2">
-                    💸 Record New Sale
-                </h2>
-                <div class="space-y-4">
-                    <div class="flex gap-2">
-                        <div class="flex-grow">
-                            <input list="p-list" id="sale-prod" placeholder="Search Item...">
-                            <datalist id="p-list"></datalist>
-                        </div>
-                        <div class="w-24">
-                            <input type="number" id="sale-qty" placeholder="Qty">
-                        </div>
+            <div class="card p-6 border-t-2 border-green-500">
+                <h2 class="text-green-500 font-black uppercase text-sm mb-4">💸 Record Sale</h2>
+                <div class="space-y-3">
+                    <div class="flex gap-1">
+                        <input list="p-list" id="sale-prod" placeholder="Select Product">
+                        <datalist id="p-list"></datalist>
+                        <input type="number" id="sale-qty" placeholder="Qty" class="w-20">
                     </div>
-                    <button onclick="addToQueue()" class="w-full bg-green-900 border border-green-500 text-green-100 font-bold py-3 rounded-xl text-xs uppercase tracking-widest hover:bg-green-800 transition">
-                        Add to Basket
-                    </button>
-                    
-                    <div id="sale-queue" class="bg-black p-4 rounded-xl text-xs text-gray-400 min-h-[60px] border border-gray-800 italic">
-                        No items in basket...
-                    </div>
-
+                    <button onclick="addToQueue()" class="w-full bg-gray-800 text-xs py-2 rounded font-bold uppercase">Add to Basket</button>
+                    <div id="sale-queue" class="bg-black p-2 rounded text-[10px] text-gray-500 italic">Basket empty...</div>
                     <hr class="border-gray-800">
-                    
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase ml-1">Customer Info</label>
-                        <div class="space-y-2 mt-1">
-                            <input type="text" id="c-name" placeholder="Customer Name">
-                            <input type="text" id="c-phone" placeholder="Phone Number">
-                            <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
-                        </div>
-                    </div>
-                    
-                    <button onclick="saveCustomer()" class="w-full border-2 border-green-500 text-green-500 font-black py-4 rounded-xl uppercase tracking-widest hover:bg-green-500 hover:text-black transition-all">
-                        Complete Sale
-                    </button>
+                    <input type="text" id="c-name" placeholder="Customer Name">
+                    <input type="text" id="c-phone" placeholder="Customer Phone">
+                    <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
+                    <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded uppercase text-xs">Complete Sale</button>
                 </div>
-            </section>
+            </div>
         </div>
 
-        <div class="lg:col-span-8 space-y-8">
-            
+        <div class="lg:col-span-8 space-y-6">
             <div class="card overflow-hidden">
-                <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
-                    <h2 class="font-black text-xs gold-text uppercase tracking-widest">Customer Accounts Ledger</h2>
-                </div>
+                <div class="p-3 bg-gray-900 border-b border-gray-800"><h2 class="text-[10px] font-black gold-text uppercase">Customer Accounts</h2></div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm min-w-[750px]">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="p-5">Customer & Items</th>
-                                <th class="p-5">Contact</th>
-                                <th class="p-5 text-right">Total (CFA)</th>
-                                <th class="p-5 text-right text-red-400">Balance</th>
-                                <th class="p-5 text-center">Manager Actions</th>
-                            </tr>
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-black text-gray-500 uppercase">
+                            <tr><th class="p-4">Customer</th><th class="p-4">Phone</th><th class="p-4 text-right">Total</th><th class="p-4 text-right">Balance</th><th class="p-4 text-center">Actions</th></tr>
                         </thead>
-                        <tbody id="customer-table" class="divide-y divide-gray-800">
-                            </tbody>
+                        <tbody id="customer-table" class="divide-y divide-gray-800"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="card overflow-hidden">
-                <div class="p-4 bg-gray-900 border-b border-gray-800">
-                    <h2 class="font-black text-xs gold-text uppercase tracking-widest">Current Inventory Stock</h2>
-                </div>
+                <div class="p-3 bg-gray-900 border-b border-gray-800"><h2 class="text-[10px] font-black gold-text uppercase">Stock Inventory</h2></div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm min-w-[600px]">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="p-5">Batch / Product Name</th>
-                                <th class="p-5">Current Stock</th>
-                                <th class="p-5 text-right">Retail Price</th>
-                                <th class="p-5 text-center">Settings</th>
-                            </tr>
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-black text-gray-500 uppercase">
+                            <tr><th class="p-4">Item</th><th class="p-4">Remaining</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Edit</th></tr>
                         </thead>
-                        <tbody id="inventory-table" class="divide-y divide-gray-800">
-                            </tbody>
+                        <tbody id="inventory-table" class="divide-y divide-gray-800"></tbody>
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 
