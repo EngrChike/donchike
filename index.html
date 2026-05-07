@@ -4,325 +4,245 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AkuDon Executive Terminal</title>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        body { background-color: #0a0a0a; color: #e5e7eb; font-family: 'Segoe UI', system-ui, sans-serif; }
+        /* Luxury Dark Theme Styling */
+        body { 
+            background-color: #0a0a0a; 
+            color: #e5e7eb; 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+        }
+        
         .gold-text { color: #d4af37; }
         .gold-bg { background-color: #d4af37; }
-        .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 12px; }
-        input, select { background-color: #0d1117; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 8px; outline: none; width: 100%; font-size: 16px; }
-        input:focus, select:focus { border-color: #d4af37; }
-        .table-header { background-color: #0d1117; color: #8b949e; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
-        .active-batch-pill { background: #d4af37; color: black; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; }
+        
+        .card { 
+            background-color: #161b22; 
+            border: 1px solid #30363d; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        
+        /* Premium Input Styles */
+        input, select { 
+            background-color: #0d1117; 
+            border: 1px solid #30363d; 
+            color: white; 
+            padding: 14px; 
+            border-radius: 8px; 
+            outline: none; 
+            width: 100%; 
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus { 
+            border-color: #d4af37; 
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+        }
+        
+        /* Table Aesthetics */
+        .table-header { 
+            background-color: #0d1117; 
+            color: #8b949e; 
+            text-transform: uppercase; 
+            font-size: 0.75rem; 
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+        
+        .active-batch-pill { 
+            background: linear-gradient(135deg, #d4af37 0%, #f9e29c 100%);
+            color: #000; 
+            padding: 6px 16px; 
+            border-radius: 50px; 
+            font-weight: 800; 
+            font-size: 12px;
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Mobile Optimization */
+        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+        @media (max-width: 768px) {
+            .stats-text { font-size: 1.1rem !important; }
+            h1 { font-size: 1.5rem !important; }
+        }
     </style>
 </head>
 <body class="p-2 md:p-10">
 
-    <header class="text-center mb-6">
-        <h1 class="text-3xl md:text-4xl font-bold gold-text tracking-tighter uppercase">AKUDON COSMETICS</h1>
-        <p class="text-gray-500 text-xs uppercase tracking-widest mb-4">Executive Inventory Terminal</p>
+    <header class="text-center mb-8">
+        <h1 class="text-3xl md:text-5xl font-extrabold gold-text tracking-tighter uppercase mb-2">AKUDON COSMETICS</h1>
+        <p class="text-gray-500 text-xs uppercase tracking-widest mb-6">Inventory & Sales Executive Terminal</p>
         
-        <div class="flex flex-col md:flex-row justify-center items-center gap-4 bg-gray-900 p-4 rounded-xl border border-gray-800">
-            <div class="flex items-center gap-2">
-                <span class="text-gray-400 text-xs uppercase">Current View:</span>
-                <span id="current-batch-display" class="active-batch-pill">All Records</span>
+        <div class="max-w-3xl mx-auto flex flex-col md:flex-row justify-center items-center gap-4 bg-gray-900 p-5 rounded-2xl border border-gray-800">
+            <div class="flex items-center gap-3">
+                <span class="text-gray-400 text-xs uppercase font-bold">Active Entry:</span>
+                <span id="current-batch-display" class="active-batch-pill">ALL RECORDS</span>
             </div>
-            <div class="flex gap-2">
-                <select id="batch-filter" onchange="switchBatch()" class="py-1 px-3 text-xs w-48">
-                    <option value="ALL">Show All Batches</option>
-                </select>
-                <button onclick="startNewBatch()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2 rounded font-bold uppercase tracking-tighter">+ New Entry</button>
+            <div class="flex gap-2 w-full md:w-auto">
+                <select id="batch-filter" onchange="switchBatch()" class="py-2 px-4 text-xs bg-black border-gray-700"></select>
+                <button onclick="startNewBatch()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-6 py-2 rounded-lg font-black uppercase tracking-widest transition-all">
+                    + New Batch
+                </button>
             </div>
         </div>
     </header>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        <div class="card p-3 border-b-4 border-yellow-500">
-            <h3 class="text-[10px] text-gray-400 uppercase">Stock (₦)</h3>
-            <p id="total-naira" class="text-lg md:text-2xl font-bold font-mono">₦0</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div class="card p-4 border-l-4 border-yellow-500">
+            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Stock (₦)</h3>
+            <p id="total-naira" class="stats-text text-2xl font-bold font-mono gold-text">₦0</p>
         </div>
-        <div class="card p-3 border-b-4 border-yellow-600">
-            <h3 class="text-[10px] text-gray-400 uppercase">Stock (CFA)</h3>
-            <p id="total-cfa" class="text-lg md:text-2xl font-bold font-mono text-yellow-500">0</p>
+        <div class="card p-4 border-l-4 border-yellow-600">
+            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Cost Value (CFA)</h3>
+            <p id="total-cfa" class="stats-text text-2xl font-bold font-mono text-yellow-500">0</p>
         </div>
-        <div class="card p-3 border-b-4 border-green-600">
-            <h3 class="text-[10px] text-gray-400 uppercase">Revenue</h3>
-            <p id="expected-cfa" class="text-lg md:text-2xl font-bold font-mono text-green-400">0</p>
+        <div class="card p-4 border-l-4 border-green-600">
+            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Expected Revenue</h3>
+            <p id="expected-cfa" class="stats-text text-2xl font-bold font-mono text-green-400">0</p>
         </div>
-        <div class="card p-3 border-b-4 border-red-600">
-            <h3 class="text-[10px] text-gray-400 uppercase">Debt</h3>
-            <p id="total-debt" class="text-lg md:text-2xl font-bold font-mono text-red-500">0</p>
+        <div class="card p-4 border-l-4 border-red-600">
+            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Debt</h3>
+            <p id="total-debt" class="stats-text text-2xl font-bold font-mono text-red-500">0</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-        <div class="lg:col-span-4 space-y-6">
-            <section class="card p-5 shadow-2xl">
-                <h2 id="p-title" class="text-lg font-bold gold-text mb-4 uppercase">📦 Stock Entry</h2>
-                <div class="space-y-3">
-                    <input type="text" id="p-batch" placeholder="Batch Name (e.g. Nov 2025)">
-                    <input type="text" id="p-name" placeholder="Product Name">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="p-dozens" placeholder="Qty (Doz)" step="0.1">
-                        <input type="number" id="p-naira" placeholder="Cost ₦">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <div class="lg:col-span-4 space-y-8">
+            
+            <section class="card p-6 border-t-4 border-yellow-500">
+                <h2 id="p-title" class="text-xl font-black gold-text mb-5 uppercase flex items-center gap-2">
+                    📦 Product Registration
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Target Batch</label>
+                        <input type="text" id="p-batch" placeholder="Batch Name (e.g. Nov 2025)">
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="p-cfa" placeholder="Cost CFA">
-                        <input type="number" id="p-sell" placeholder="Selling CFA">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Item Name</label>
+                        <input type="text" id="p-name" placeholder="Name of Cosmetics">
                     </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded-lg uppercase hover:opacity-90 transition">Save Product</button>
-                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-xs py-2 rounded mt-2">Cancel Edit</button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase ml-1">Qty (Dozens)</label>
+                            <input type="number" id="p-dozens" placeholder="0.0" step="0.1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase ml-1">Price ₦</label>
+                            <input type="number" id="p-naira" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase ml-1">Cost CFA</label>
+                            <input type="number" id="p-cfa" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase ml-1">Sell CFA</label>
+                            <input type="number" id="p-sell" placeholder="0">
+                        </div>
+                    </div>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:opacity-90 shadow-lg transition-all">
+                        Register Product
+                    </button>
+                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-xs py-2 rounded-lg font-bold uppercase">
+                        Cancel Edit
+                    </button>
                 </div>
             </section>
 
-            <section class="card p-5 shadow-2xl border-t-4 border-green-600">
-                <h2 class="text-lg font-bold text-green-500 mb-4 uppercase">💸 New Sale</h2>
-                <div class="space-y-3">
-                    <input list="p-list" id="sale-prod" placeholder="Select Item...">
-                    <datalist id="p-list"></datalist>
-                    <input type="number" id="sale-qty" placeholder="Quantity">
-                    <button onclick="addToQueue()" class="w-full bg-green-900 text-green-100 font-bold py-2 rounded text-xs uppercase">Add to Basket</button>
-                    <div id="sale-queue" class="bg-black p-3 rounded text-xs text-gray-400 min-h-[50px] border border-gray-800 italic">Basket is empty...</div>
-                    <hr class="border-gray-800 my-2">
-                    <input type="text" id="c-name" placeholder="Customer Name">
-                    <input type="text" id="c-phone" placeholder="Customer Phone">
-                    <input type="number" id="c-paid" placeholder="Cash Paid (CFA)">
-                    <button onclick="saveCustomer()" class="w-full border-2 border-green-500 text-green-500 font-black py-3 rounded-lg uppercase tracking-tighter hover:bg-green-500 hover:text-black transition">Confirm Sale</button>
+            <section class="card p-6 border-t-4 border-green-500">
+                <h2 class="text-xl font-black text-green-500 mb-5 uppercase flex items-center gap-2">
+                    💸 Record New Sale
+                </h2>
+                <div class="space-y-4">
+                    <div class="flex gap-2">
+                        <div class="flex-grow">
+                            <input list="p-list" id="sale-prod" placeholder="Search Item...">
+                            <datalist id="p-list"></datalist>
+                        </div>
+                        <div class="w-24">
+                            <input type="number" id="sale-qty" placeholder="Qty">
+                        </div>
+                    </div>
+                    <button onclick="addToQueue()" class="w-full bg-green-900 border border-green-500 text-green-100 font-bold py-3 rounded-xl text-xs uppercase tracking-widest hover:bg-green-800 transition">
+                        Add to Basket
+                    </button>
+                    
+                    <div id="sale-queue" class="bg-black p-4 rounded-xl text-xs text-gray-400 min-h-[60px] border border-gray-800 italic">
+                        No items in basket...
+                    </div>
+
+                    <hr class="border-gray-800">
+                    
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase ml-1">Customer Info</label>
+                        <div class="space-y-2 mt-1">
+                            <input type="text" id="c-name" placeholder="Customer Name">
+                            <input type="text" id="c-phone" placeholder="Phone Number">
+                            <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
+                        </div>
+                    </div>
+                    
+                    <button onclick="saveCustomer()" class="w-full border-2 border-green-500 text-green-500 font-black py-4 rounded-xl uppercase tracking-widest hover:bg-green-500 hover:text-black transition-all">
+                        Complete Sale
+                    </button>
                 </div>
             </section>
         </div>
 
-        <div class="lg:col-span-8 space-y-6">
+        <div class="lg:col-span-8 space-y-8">
+            
             <div class="card overflow-hidden">
-                <h2 class="p-4 font-bold text-xs gold-text border-b border-gray-800 uppercase tracking-widest">Customer Ledger</h2>
+                <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="font-black text-xs gold-text uppercase tracking-widest">Customer Accounts Ledger</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm min-w-[750px]">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="p-5">Customer & Items</th>
+                                <th class="p-5">Contact</th>
+                                <th class="p-5 text-right">Total (CFA)</th>
+                                <th class="p-5 text-right text-red-400">Balance</th>
+                                <th class="p-5 text-center">Manager Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-table" class="divide-y divide-gray-800">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card overflow-hidden">
+                <div class="p-4 bg-gray-900 border-b border-gray-800">
+                    <h2 class="font-black text-xs gold-text uppercase tracking-widest">Current Inventory Stock</h2>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm min-w-[600px]">
                         <thead class="table-header">
                             <tr>
-                                <th class="p-4">Customer/Products</th>
-                                <th class="p-4">Phone</th>
-                                <th class="p-4 text-right">Total</th>
-                                <th class="p-4 text-right">Balance</th>
-                                <th class="p-4 text-center">Action</th>
+                                <th class="p-5">Batch / Product Name</th>
+                                <th class="p-5">Current Stock</th>
+                                <th class="p-5 text-right">Retail Price</th>
+                                <th class="p-5 text-center">Settings</th>
                             </tr>
                         </thead>
-                        <tbody id="customer-table"></tbody>
+                        <tbody id="inventory-table" class="divide-y divide-gray-800">
+                            </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="card overflow-hidden">
-                <h2 class="p-4 font-bold text-xs gold-text border-b border-gray-800 uppercase tracking-widest">Available Inventory</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm min-w-[500px]">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="p-4">Batch/Item</th>
-                                <th class="p-4">Remaining</th>
-                                <th class="p-4 text-right">Price (CFA)</th>
-                                <th class="p-4 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventory-table"></tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
 
-    <script>
-        const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI';
-        
-        let _db, inventory = [], customers = [], queue = [], editingProdId = null;
-        let activeBatch = 'ALL';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            _db = supabase.createClient(supabaseUrl, supabaseKey);
-            loadData();
-        });
-
-        async function loadData() {
-            const resP = await _db.from('products').select('*').order('name');
-            const resC = await _db.from('customers').select('*').order('updated_at', { ascending: false });
-            inventory = resP.data || [];
-            customers = resC.data || [];
-            
-            updateBatchDropdown();
-            renderUI();
-        }
-
-        function updateBatchDropdown() {
-            const batches = [...new Set(inventory.map(p => p.batch_name))].filter(b => b);
-            const select = document.getElementById('batch-filter');
-            select.innerHTML = '<option value="ALL">Show All Batches</option>' + 
-                               batches.map(b => `<option value="${b}">${b}</option>`).join('');
-            select.value = activeBatch;
-        }
-
-        window.switchBatch = () => {
-            activeBatch = document.getElementById('batch-filter').value;
-            document.getElementById('current-batch-display').innerText = activeBatch === 'ALL' ? 'All Records' : activeBatch;
-            renderUI();
-        };
-
-        window.startNewBatch = () => {
-            const name = prompt("Enter the name for the new entry (e.g. November Batch 2025):");
-            if (name) {
-                activeBatch = name;
-                document.getElementById('p-batch').value = name;
-                document.getElementById('current-batch-display').innerText = name;
-                // Add new batch to dropdown immediately
-                const select = document.getElementById('batch-filter');
-                const opt = document.createElement('option');
-                opt.value = name; opt.text = name;
-                select.add(opt);
-                select.value = name;
-                renderUI(); 
-            }
-        };
-
-        window.saveProduct = async function() {
-            const batchName = document.getElementById('p-batch').value;
-            const dozens = parseFloat(document.getElementById('p-dozens').value) || 0;
-            const priceN = parseFloat(document.getElementById('p-naira').value) || 0;
-            const sellC = parseFloat(document.getElementById('p-sell').value) || 0;
-            
-            const payload = {
-                "batch_name": batchName,
-                "name": document.getElementById('p-name').value,
-                "dozens": dozens, "price_naira": priceN,
-                "cost_cfa": parseFloat(document.getElementById('p-cfa').value) || 0,
-                "sell_price_cfa": sellC, "total_naira": dozens * priceN,
-                "total_expected_cfa": dozens * sellC
-            };
-
-            let res = editingProdId ? await _db.from('products').update(payload).eq('id', editingProdId) : await _db.from('products').insert([payload]);
-            if (!res.error) { clearProductForm(); activeBatch = batchName; loadData(); }
-        };
-
-        window.saveCustomer = async function() {
-            const name = document.getElementById('c-name').value;
-            const phone = document.getElementById('c-phone').value;
-            const paid = parseFloat(document.getElementById('c-paid').value) || 0;
-            const total = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
-
-            // We tag the customer with the current active batch so they can be filtered
-            const { error } = await _db.from('customers').insert([{
-                name, phone, items_json: queue, total_amount: total, amount_paid: paid, 
-                balance: total - paid, updated_at: new Date().toISOString(),
-                batch_tag: activeBatch // New logic to link customers to batch
-            }]);
-
-            if (!error) {
-                for (let item of queue) {
-                    const p = inventory.find(x => x.id === item.id);
-                    if (p) await _db.from('products').update({ sold_units: (p.sold_units || 0) + item.qty }).eq('id', item.id);
-                }
-                queue = []; document.getElementById('sale-queue').innerHTML = 'Basket empty...';
-                ['c-name','c-phone','c-paid'].forEach(id => document.getElementById(id).value = '');
-                loadData();
-            }
-        };
-
-        function renderUI() {
-            // Filter both lists based on activeBatch
-            const filteredInv = activeBatch === 'ALL' ? inventory : inventory.filter(p => p.batch_name === activeBatch);
-            const filteredCust = activeBatch === 'ALL' ? customers : customers.filter(c => {
-                // If customer is tagged with batch, or if any item in their receipt belongs to the batch
-                if (c.batch_tag === activeBatch) return true;
-                return c.items_json?.some(item => {
-                    const prod = inventory.find(p => p.id === item.id);
-                    return prod && prod.batch_name === activeBatch;
-                });
-            });
-
-            // Update Stats based on filtered data
-            const tNaira = filteredInv.reduce((s, p) => s + (p.total_naira || 0), 0);
-            const tCfa = filteredInv.reduce((s, p) => s + ((p.dozens || 0) * (p.cost_cfa || 0)), 0);
-            const eCfa = filteredInv.reduce((s, p) => s + (p.total_expected_cfa || 0), 0);
-            const debt = filteredCust.reduce((s, c) => s + (c.balance || 0), 0);
-
-            document.getElementById('total-naira').innerText = "₦" + tNaira.toLocaleString();
-            document.getElementById('total-cfa').innerText = tCfa.toLocaleString();
-            document.getElementById('expected-cfa').innerText = eCfa.toLocaleString();
-            document.getElementById('total-debt').innerText = debt.toLocaleString();
-
-            // Populate Item Selection (Only items in current batch)
-            document.getElementById('p-list').innerHTML = filteredInv.map(i => `<option value="${i.name}">`).join('');
-
-            // Populate Tables
-            document.getElementById('inventory-table').innerHTML = filteredInv.map(p => `
-                <tr class="border-b border-gray-800 hover:bg-gray-900 transition text-xs">
-                    <td class="p-4"><span class="text-[10px] text-gray-500 font-mono">${p.batch_name}</span><br><strong>${p.name}</strong></td>
-                    <td class="p-4">${((p.dozens || 0) - (p.sold_units || 0)).toFixed(1)} <small>Doz</small></td>
-                    <td class="p-4 text-right font-mono">${(p.sell_price_cfa || 0).toLocaleString()}</td>
-                    <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 font-bold underline">Edit</button></td>
-                </tr>`).join('');
-
-            document.getElementById('customer-table').innerHTML = filteredCust.map(c => {
-                const items = (c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ');
-                return `
-                <tr class="border-b border-gray-800 hover:bg-gray-900 transition text-xs">
-                    <td class="p-4"><strong>${c.name}</strong><br><span class="text-[10px] text-yellow-600 italic">${items}</span></td>
-                    <td class="p-4 text-gray-400">${c.phone || '---'}</td>
-                    <td class="p-4 text-right font-mono">${(c.total_amount || 0).toLocaleString()}</td>
-                    <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-500'} font-mono">${(c.balance || 0).toLocaleString()}</td>
-                    <td class="p-4 text-center flex flex-col gap-1">
-                        <button onclick="editCustomerPayment(${c.id})" class="bg-yellow-600 text-black px-2 py-1 rounded text-[10px] font-black uppercase">Pay</button>
-                        <button onclick="deleteCustomer(${c.id})" class="text-red-900 text-[10px] font-bold uppercase">Del</button>
-                    </td>
-                </tr>`;
-            }).join('');
-        }
-
-        // Re-use previous helper functions
-        window.editProduct = (id) => {
-            const p = inventory.find(x => x.id === id);
-            if (!p) return;
-            editingProdId = id;
-            document.getElementById('p-title').innerText = "📝 Edit " + p.name;
-            document.getElementById('p-batch').value = p.batch_name;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-dozens').value = p.dozens;
-            document.getElementById('p-naira').value = p.price_naira;
-            document.getElementById('p-cfa').value = p.cost_cfa;
-            document.getElementById('p-sell').value = p.sell_price_cfa;
-            document.getElementById('p-cancel').classList.remove('hidden');
-        };
-        window.clearProductForm = () => {
-            editingProdId = null;
-            ['p-name','p-dozens','p-naira','p-cfa','p-sell'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('p-batch').value = activeBatch === 'ALL' ? '' : activeBatch;
-            document.getElementById('p-title').innerText = "📦 Stock Entry";
-            document.getElementById('p-cancel').classList.add('hidden');
-        };
-        window.addToQueue = () => {
-            const pName = document.getElementById('sale-prod').value;
-            const qty = parseFloat(document.getElementById('sale-qty').value) || 0;
-            const p = inventory.find(x => x.name === pName);
-            if (p && qty > 0) {
-                queue.push({ id: p.id, name: p.name, qty: qty, price: p.sell_price_cfa });
-                document.getElementById('sale-queue').innerHTML = queue.map(i => `<div>• ${i.qty} ${i.name}</div>`).join('');
-                document.getElementById('sale-prod').value = ''; document.getElementById('sale-qty').value = '';
-            }
-        };
-        window.editCustomerPayment = async function(id) {
-            const c = customers.find(x => x.id === id);
-            const val = prompt(`Update TOTAL amount paid by ${c.name}:`, c.amount_paid);
-            if (val !== null) {
-                const paid = parseFloat(val) || 0;
-                await _db.from('customers').update({ amount_paid: paid, balance: c.total_amount - paid, updated_at: new Date().toISOString() }).eq('id', id);
-                loadData();
-            }
-        };
-        window.deleteCustomer = async function(id) {
-            if (confirm("Delete sale?")) {
-                await _db.from('customers').delete().eq('id', id);
-                loadData();
-            }
-        };
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
