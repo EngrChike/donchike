@@ -83,27 +83,35 @@ window.saveProduct = async function() {
 
 // --- SALES & ACCOUNT UPDATES ---
 window.addToQueue = () => {
-    const pName = document.getElementById('sale-prod').value;
-    const qty = parseFloat(document.getElementById('sale-qty').value) || 0;
+    const pNameInput = document.getElementById('sale-prod');
+    const qQtyInput = document.getElementById('sale-qty');
+    const pName = pNameInput.value;
+    const qty = parseFloat(qQtyInput.value) || 0;
     const p = inventory.find(x => x.name === pName);
     
     if (p && qty > 0) {
         queue.push({ id: p.id, name: p.name, qty: qty, price: p.sell_price_cfa });
         document.getElementById('sale-queue').innerHTML = queue.map(i => `<div>• ${i.qty} ${i.name}</div>`).join('');
-        document.getElementById('sale-prod').value = ''; 
-        document.getElementById('sale-qty').value = '';
+        pNameInput.value = ''; 
+        qQtyInput.value = '';
     } else {
         alert("Select a valid product and quantity.");
     }
 };
 
 window.saveCustomer = async function() {
-    const name = document.getElementById('c-name').value;
-    const phone = document.getElementById('c-phone').value;
-    const paid = parseFloat(document.getElementById('c-paid').value) || 0;
+    const nameInput = document.getElementById('c-name');
+    const phoneInput = document.getElementById('c-phone');
+    const paidInput = document.getElementById('c-paid');
+    
+    const name = nameInput.value;
+    const phone = phoneInput.value;
+    const paid = parseFloat(paidInput.value) || 0;
     const total = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
 
-    if (!name || queue.length === 0) return alert("Please provide customer name and items in basket.");
+    if (!name || queue.length === 0) {
+        return alert("Please add items to the basket and enter a customer name!");
+    }
 
     const { error } = await _db.from('customers').insert([{
         name: name,
@@ -118,17 +126,23 @@ window.saveCustomer = async function() {
 
     if (!error) {
         await updateStock(queue);
-        queue = [];
+        // Reset basket and form
+        queue = []; 
         document.getElementById('sale-queue').innerHTML = 'Basket empty...';
-        ['c-name', 'c-phone', 'c-paid'].forEach(id => document.getElementById(id).value = '');
+        nameInput.value = '';
+        phoneInput.value = '';
+        paidInput.value = '';
         loadData();
+        alert("Sale Complete! Form cleared for next entry.");
     } else {
         alert("Error creating sale: " + error.message);
     }
 };
 
 window.addToExistingCustomer = async function(id) {
-    if (queue.length === 0) return alert("Basket is empty! Add items first.");
+    if (queue.length === 0) {
+        return alert("INSTRUCTION: First, add the new items to the 'New Sale' basket above, THEN click this button to add them to this customer's account.");
+    }
     
     const c = customers.find(x => x.id === id);
     const addedTotal = queue.reduce((sum, item) => sum + (item.qty * item.price), 0);
@@ -145,7 +159,7 @@ window.addToExistingCustomer = async function(id) {
 
     if (!error) {
         await updateStock(queue);
-        queue = [];
+        queue = []; 
         document.getElementById('sale-queue').innerHTML = 'Basket empty...';
         alert(`Account for ${c.name} updated!`);
         loadData();
@@ -214,16 +228,13 @@ function renderUI() {
     const fInv = activeBatch === 'ALL' ? inventory : inventory.filter(p => p.batch_name === activeBatch);
     const fCust = activeBatch === 'ALL' ? customers : customers.filter(c => c.batch_tag === activeBatch);
 
-    // Stats Calculations
     document.getElementById('total-naira').innerText = "₦" + fInv.reduce((s, p) => s + (p.total_naira || 0), 0).toLocaleString();
     document.getElementById('total-cfa').innerText = fInv.reduce((s, p) => s + ((p.dozens || 0) * (p.cost_cfa || 0)), 0).toLocaleString();
     document.getElementById('expected-cfa').innerText = fInv.reduce((s, p) => s + (p.total_expected_cfa || 0), 0).toLocaleString();
     document.getElementById('total-debt').innerText = fCust.reduce((s, c) => s + (c.balance || 0), 0).toLocaleString();
 
-    // Datalist for sales
     document.getElementById('p-list').innerHTML = fInv.map(i => `<option value="${i.name}">`).join('');
 
-    // Inventory Table
     document.getElementById('inventory-table').innerHTML = fInv.map(p => `
         <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs">
             <td class="p-4"><span class="text-[10px] text-gray-500 font-mono">${p.batch_name}</span><br><strong>${p.name}</strong></td>
@@ -232,7 +243,6 @@ function renderUI() {
             <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 font-bold underline">Edit</button></td>
         </tr>`).join('');
 
-    // Customer Table
     document.getElementById('customer-table').innerHTML = fCust.map(c => `
         <tr class="border-b border-gray-800 hover:bg-gray-900 text-xs">
             <td class="p-4"><strong>${c.name}</strong><br><span class="text-[10px] text-yellow-600 italic">${(c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ')}</span></td>
