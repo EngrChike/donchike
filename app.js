@@ -1,8 +1,8 @@
 const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI';
 
-// --- SECURITY CONFIGURATION ---
-const MANAGER_PASSWORD = "Chyke2uk..."; // Change this to your preferred secret code
+// --- SECURITY SETTINGS ---
+const MASTER_KEY = "Chyke2uk..."; // Change your password here
 
 let _db, inventory = [], customers = [], queue = [], editingProdId = null;
 let activeBatch = 'ALL';
@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
 });
 
-// Authentication Helper
-function authenticate() {
-    const input = prompt("Enter Manager Password to authorize this action:");
-    if (input === MANAGER_PASSWORD) return true;
-    alert("Unauthorized! Action cancelled.");
+// The authentication gate
+function checkAuth() {
+    const pass = prompt("🔒 Manager Security Check: Please enter password to proceed:");
+    if (pass === MASTER_KEY) return true;
+    alert("❌ Access Denied: Incorrect Password.");
     return false;
 }
 
@@ -31,7 +31,7 @@ async function loadData() {
     } catch (e) { console.error(e); }
 }
 
-// --- BATCH TOOLS (PROTECTED) ---
+// --- BATCH MANAGEMENT ---
 function updateBatchDropdown() {
     const batches = [...new Set(inventory.map(p => p.batch_name))].filter(b => b);
     const select = document.getElementById('batch-filter');
@@ -48,7 +48,7 @@ window.switchBatch = () => {
 };
 
 window.startNewBatch = () => {
-    const name = prompt("Enter Batch Name:");
+    const name = prompt("New Batch Name:");
     if (name) {
         activeBatch = name;
         document.getElementById('p-batch').value = name;
@@ -58,8 +58,8 @@ window.startNewBatch = () => {
 };
 
 window.renameCurrentBatch = async function() {
-    if (!authenticate()) return; // Lock
-    if (activeBatch === 'ALL') return alert("Select a batch first.");
+    if (!checkAuth()) return;
+    if (activeBatch === 'ALL') return alert("Select a batch.");
     const newName = prompt(`Rename "${activeBatch}" to:`, activeBatch);
     if (!newName || newName === activeBatch) return;
     await _db.from('products').update({ batch_name: newName }).eq('batch_name', activeBatch);
@@ -69,9 +69,9 @@ window.renameCurrentBatch = async function() {
 };
 
 window.deleteCurrentBatch = async function() {
-    if (!authenticate()) return; // Lock
+    if (!checkAuth()) return;
     if (activeBatch === 'ALL') return alert("Select a batch.");
-    if (confirm(`Delete everything in "${activeBatch}"?`)) {
+    if (confirm(`Delete ALL records for "${activeBatch}"?`)) {
         await _db.from('products').delete().eq('batch_name', activeBatch);
         await _db.from('customers').delete().eq('batch_tag', activeBatch);
         activeBatch = 'ALL';
@@ -79,14 +79,13 @@ window.deleteCurrentBatch = async function() {
     }
 };
 
-// --- CORE FUNCTIONS ---
+// --- PRODUCT LOGIC ---
 window.saveProduct = async function() {
-    // If editing an existing product, require password
-    if (editingProdId && !authenticate()) return;
-
+    // If it's a new product, no password needed. If editing, we already checked password in editProduct().
     const doz = parseFloat(document.getElementById('p-dozens').value) || 0;
     const nair = parseFloat(document.getElementById('p-naira').value) || 0;
     const sellC = parseFloat(document.getElementById('p-sell').value) || 0;
+    
     const payload = {
         batch_name: document.getElementById('p-batch').value,
         name: document.getElementById('p-name').value,
@@ -95,10 +94,35 @@ window.saveProduct = async function() {
         sell_price_cfa: sellC,
         total_naira: doz * nair, total_expected_cfa: doz * sellC
     };
+
     let res = editingProdId ? await _db.from('products').update(payload).eq('id', editingProdId) : await _db.from('products').insert([payload]);
     if (!res.error) { clearProductForm(); loadData(); }
 };
 
+window.editProduct = (id) => {
+    if (!checkAuth()) return; // PROMPT PASSWORD IMMEDIATELY
+    const p = inventory.find(x => x.id === id);
+    editingProdId = id;
+    document.getElementById('p-title').innerText = "📝 Edit " + p.name;
+    document.getElementById('p-batch').value = p.batch_name;
+    document.getElementById('p-name').value = p.name;
+    document.getElementById('p-dozens').value = p.dozens;
+    document.getElementById('p-naira').value = p.price_naira;
+    document.getElementById('p-cfa').value = p.cost_cfa;
+    document.getElementById('p-sell').value = p.sell_price_cfa;
+    document.getElementById('p-cancel').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deleteProduct = async function(id) {
+    if (!checkAuth()) return;
+    if (confirm("Delete product?")) {
+        await _db.from('products').delete().eq('id', id);
+        loadData();
+    }
+};
+
+// --- SALES LOGIC ---
 window.addToQueue = () => {
     const prodInput = document.getElementById('sale-prod');
     const qtyInput = document.getElementById('sale-qty');
@@ -115,15 +139,14 @@ window.saveCustomer = async function() {
     const p = document.getElementById('c-phone').value;
     const pd = parseFloat(document.getElementById('c-paid').value) || 0;
     const total = queue.reduce((s, i) => s + (i.qty * i.price), 0);
-    const dateStr = new Date().toLocaleString(); // Current timestamp
+    const today = new Date().toLocaleString();
 
     if (!n || queue.length === 0) return alert("Missing Info!");
 
     const { error } = await _db.from('customers').insert([{
         name: n, phone: p, items_json: queue, total_amount: total,
         amount_paid: pd, balance: total - pd, updated_at: new Date().toISOString(), 
-        batch_tag: activeBatch,
-        last_payment_date: dateStr // Record first payment date
+        batch_tag: activeBatch, last_payment_date: today
     }]);
 
     if (!error) {
@@ -138,9 +161,25 @@ window.saveCustomer = async function() {
     }
 };
 
-window.addToExistingCustomer = async function(id) {
-    if (queue.length === 0) return alert("Add items to basket first!");
+window.editCustomerPayment = async function(id) {
+    if (!checkAuth()) return; // PROMPT PASSWORD IMMEDIATELY
     const c = customers.find(x => x.id === id);
+    const val = prompt(`Total Paid by ${c.name}:`, c.amount_paid);
+    if (val !== null) {
+        const paid = parseFloat(val) || 0;
+        const now = new Date().toLocaleString();
+        await _db.from('customers').update({ 
+            amount_paid: paid, balance: c.total_amount - paid, 
+            updated_at: new Date().toISOString(), last_payment_date: now 
+        }).eq('id', id);
+        loadData();
+    }
+};
+
+window.addToExistingCustomer = async function(id) {
+    // Workers can add items, but if they want to change payment history, we lock it.
+    const c = customers.find(x => x.id === id);
+    if (queue.length === 0) return alert("Basket empty!");
     const addTotal = queue.reduce((s, i) => s + (i.qty * i.price), 0);
     const newTotal = c.total_amount + addTotal;
     
@@ -158,51 +197,12 @@ window.addToExistingCustomer = async function(id) {
     queue = []; loadData();
 };
 
-window.editCustomerPayment = async function(id) {
-    if (!authenticate()) return; // Lock
-
-    const c = customers.find(x => x.id === id);
-    const val = prompt(`New Total Paid Amount for ${c.name}:`, c.amount_paid);
-    if (val !== null) {
-        const paid = parseFloat(val) || 0;
-        const now = new Date().toLocaleString(); // Capture exact payment time
-        
-        await _db.from('customers').update({ 
-            amount_paid: paid, 
-            balance: c.total_amount - paid, 
-            updated_at: new Date().toISOString(),
-            last_payment_date: now // Update the payment reminder date
-        }).eq('id', id);
+window.deleteCustomer = async function(id) {
+    if (!checkAuth()) return;
+    if (confirm("Delete this sale?")) {
+        await _db.from('customers').delete().eq('id', id);
         loadData();
     }
-};
-
-window.deleteCustomer = async function(id) {
-    if (!authenticate()) return; // Lock
-    if (confirm("Delete sale?")) { await _db.from('customers').delete().eq('id', id); loadData(); }
-};
-
-window.deleteProduct = async function(id) {
-    if (!authenticate()) return; // Lock
-    if (confirm("Permanently remove this product from stock?")) { 
-        await _db.from('products').delete().eq('id', id); 
-        loadData(); 
-    }
-};
-
-window.editProduct = (id) => {
-    // We only password protect the SAVE button at the end of editing
-    const p = inventory.find(x => x.id === id);
-    editingProdId = id;
-    document.getElementById('p-title').innerText = "📝 Edit " + p.name;
-    document.getElementById('p-batch').value = p.batch_name;
-    document.getElementById('p-name').value = p.name;
-    document.getElementById('p-dozens').value = p.dozens;
-    document.getElementById('p-naira').value = p.price_naira;
-    document.getElementById('p-cfa').value = p.cost_cfa;
-    document.getElementById('p-sell').value = p.sell_price_cfa;
-    document.getElementById('p-cancel').classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 window.clearProductForm = () => {
@@ -224,26 +224,26 @@ function renderUI() {
     document.getElementById('p-list').innerHTML = fInv.map(i => `<option value="${i.name}">`).join('');
 
     document.getElementById('inventory-table').innerHTML = fInv.map(p => `
-        <tr class="hover:bg-gray-900">
-            <td class="p-4"><strong>${p.name}</strong><br><span class="text-[9px] text-gray-500">${p.batch_name}</span></td>
+        <tr class="hover:bg-gray-900 border-b border-gray-800">
+            <td class="p-4"><strong>${p.name}</strong><br><span class="text-[9px] text-gray-500 uppercase">${p.batch_name}</span></td>
             <td class="p-4">${((p.dozens || 0) - (p.sold_units || 0)).toFixed(1)} Doz</td>
             <td class="p-4 text-right font-mono">${(p.sell_price_cfa || 0).toLocaleString()}</td>
             <td class="p-4 text-center">
                 <div class="flex gap-2 justify-center">
                     <button onclick="editProduct(${p.id})" class="text-blue-400 underline">Edit</button>
-                    <button onclick="deleteProduct(${p.id})" class="text-red-900 font-bold">X</button>
+                    <button onclick="deleteProduct(${p.id})" class="text-red-700 font-bold">X</button>
                 </div>
             </td>
         </tr>`).join('');
 
     document.getElementById('customer-table').innerHTML = fCust.map(c => `
-        <tr class="hover:bg-gray-900">
+        <tr class="hover:bg-gray-900 border-b border-gray-800">
             <td class="p-4">
                 <strong>${c.name}</strong><br>
                 <span class="text-[9px] text-yellow-600">${(c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(', ')}</span><br>
-                <span class="text-[8px] text-gray-500 italic">Last Pay: ${c.last_payment_date || 'None'}</span>
+                <span class="text-[8px] text-gray-500 italic">Last Payment: ${c.last_payment_date || 'N/A'}</span>
             </td>
-            <td class="p-4 text-gray-400">${c.phone || '---'}</td>
+            <td class="p-4 text-gray-400 font-mono">${c.phone || '---'}</td>
             <td class="p-4 text-right">${(c.total_amount || 0).toLocaleString()}</td>
             <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-500'}">${(c.balance || 0).toLocaleString()}</td>
             <td class="p-4 text-center">
