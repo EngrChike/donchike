@@ -2,7 +2,7 @@ const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI';
 
 // --- SECURITY CONFIGURATION ---
-const MANAGER_PASSWORD = "123"; // Change this to your preferred secret code
+const MANAGER_PASSWORD = "Chyke2uk..."; // Change this to your preferred secret code
 
 let _db, inventory = [], customers = [], queue = [], editingProdId = null;
 let activeBatch = 'ALL';
