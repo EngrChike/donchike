@@ -17,6 +17,7 @@
         .nav-btn { background: #161b22; border: 1px solid #30363d; color: #8b949e; transition: 0.3s; }
         .nav-btn.active { border-color: #d4af37; color: #d4af37; background: #1c2128; }
         .hidden-view { display: none !important; }
+        .item-tag { color: #d4af37; font-size: 9px; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -77,7 +78,10 @@
             </div>
 
             <div class="card p-6 border-t-2 border-green-500">
-                <h2 class="text-green-500 font-black uppercase text-xs mb-4">💸 New Sale</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-green-500 font-black uppercase text-xs">💸 New Sale</h2>
+                    <span class="text-[8px] text-gray-500">Add items to basket first</span>
+                </div>
                 <div class="space-y-3">
                     <div class="flex gap-1">
                         <input list="p-list" id="sale-prod" placeholder="Select Product">
@@ -85,24 +89,30 @@
                         <input type="number" id="sale-qty" placeholder="Qty" class="w-20">
                     </div>
                     <button onclick="addToQueue()" class="w-full bg-gray-800 text-[10px] py-2 rounded font-bold uppercase">Add to Basket</button>
-                    <div id="sale-queue" class="bg-black p-2 rounded text-[10px] text-gray-500 italic min-h-[40px]">Basket empty...</div>
+                    <div id="sale-queue" class="bg-black p-2 rounded text-[10px] text-gray-500 italic min-h-[40px] border border-gray-800">Basket empty...</div>
                     <hr class="border-gray-800">
                     <input type="text" id="c-name" placeholder="Customer Name">
-                    <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
-                    <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded uppercase text-xs">Finalize Sale</button>
+                    <input type="text" id="c-phone" placeholder="Phone Number">
+                    <input type="number" id="c-paid" placeholder="Initial Payment (CFA)">
+                    <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded uppercase text-xs">Complete Sale</button>
                 </div>
             </div>
         </div>
 
         <div id="view-customers" class="hidden-view card overflow-hidden">
             <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
-                <h2 class="font-black text-xs gold-text uppercase">Batch Ledger: Customers</h2>
+                <h2 class="font-black text-xs gold-text uppercase">Customer Accounts Ledger</h2>
                 <button onclick="showView('entry')" class="text-[9px] text-gray-500">← Back</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead class="bg-black text-gray-500 uppercase">
-                        <tr><th class="p-4">Customer</th><th class="p-4 text-right">Total Bill</th><th class="p-4 text-right">Balance</th><th class="p-4 text-center">Manage</th></tr>
+                        <tr>
+                            <th class="p-4">Customer Info & Items</th>
+                            <th class="p-4 text-right">Total Bill</th>
+                            <th class="p-4 text-right">Balance</th>
+                            <th class="p-4 text-center">Actions</th>
+                        </tr>
                     </thead>
                     <tbody id="customer-table" class="divide-y divide-gray-800"></tbody>
                 </table>
@@ -111,13 +121,13 @@
 
         <div id="view-inventory" class="hidden-view card overflow-hidden">
             <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
-                <h2 class="font-black text-xs gold-text uppercase">Batch Ledger: Products</h2>
+                <h2 class="font-black text-xs gold-text uppercase">Stock Inventory</h2>
                 <button onclick="showView('entry')" class="text-[9px] text-gray-500">← Back</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead class="bg-black text-gray-500 uppercase">
-                        <tr><th class="p-4">Item</th><th class="p-4">Stock Left</th><th class="p-4 text-right">Unit Price</th><th class="p-4 text-center">Manage</th></tr>
+                        <tr><th class="p-4">Item</th><th class="p-4">Stock Left</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Manage</th></tr>
                     </thead>
                     <tbody id="inventory-table" class="divide-y divide-gray-800"></tbody>
                 </table>
