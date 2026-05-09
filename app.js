@@ -1,7 +1,7 @@
 const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI';
 
-const MASTER_KEY = "123"; // Your secret password
+const MASTER_KEY = "123"; 
 
 let _db, inventory = [], customers = [], queue = [], editingProdId = null;
 let activeBatch = 'ALL';
@@ -10,14 +10,10 @@ let authResolve = null;
 document.addEventListener('DOMContentLoaded', () => {
     _db = supabase.createClient(supabaseUrl, supabaseKey);
     loadData();
-    
-    // Add Enter key support for password modal
-    document.getElementById('modal-pass-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') confirmAuth();
-    });
+    document.getElementById('modal-pass-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') confirmAuth(); });
 });
 
-// --- PASSWORD SYSTEM (ASTERISKS) ---
+// --- SECURITY ---
 async function checkAuth() {
     return new Promise((resolve) => {
         authResolve = resolve;
@@ -31,28 +27,18 @@ async function checkAuth() {
 window.confirmAuth = () => {
     const input = document.getElementById('modal-pass-input').value;
     document.getElementById('password-modal').classList.add('hidden-view');
-    if (input === MASTER_KEY) {
-        authResolve(true);
-    } else {
-        alert("❌ Access Denied: Incorrect Password");
-        authResolve(false);
-    }
+    if (input === MASTER_KEY) { authResolve(true); } 
+    else { alert("❌ Incorrect Password"); authResolve(false); }
 };
 
-window.cancelAuth = () => {
-    document.getElementById('password-modal').classList.add('hidden-view');
-    authResolve(false);
-};
+window.cancelAuth = () => { document.getElementById('password-modal').classList.add('hidden-view'); authResolve(false); };
 
 // --- NAVIGATION ---
 window.showView = (viewName) => {
-    document.getElementById('view-entry').classList.add('hidden-view');
-    document.getElementById('view-customers').classList.add('hidden-view');
-    document.getElementById('view-inventory').classList.add('hidden-view');
-    document.getElementById('btn-entry').classList.remove('active');
-    document.getElementById('btn-customers').classList.remove('active');
-    document.getElementById('btn-inventory').classList.remove('active');
-
+    ['entry', 'customers', 'inventory'].forEach(v => {
+        document.getElementById('view-' + v).classList.add('hidden-view');
+        document.getElementById('btn-' + v).classList.remove('active');
+    });
     document.getElementById('view-' + viewName).classList.remove('hidden-view');
     document.getElementById('btn-' + viewName).classList.add('active');
 };
@@ -71,8 +57,7 @@ async function loadData() {
 function updateBatchDropdown() {
     const batches = [...new Set(inventory.map(p => p.batch_name))].filter(b => b);
     const select = document.getElementById('batch-filter');
-    select.innerHTML = '<option value="ALL">Show All Batches</option>' + 
-                       batches.map(b => `<option value="${b}">${b}</option>`).join('');
+    select.innerHTML = '<option value="ALL">Show All Batches</option>' + batches.map(b => `<option value="${b}">${b}</option>`).join('');
     select.value = activeBatch;
 }
 
@@ -84,13 +69,8 @@ window.switchBatch = () => {
 };
 
 window.startNewBatch = () => {
-    const name = prompt("Enter New Batch Name:");
-    if (name) { 
-        activeBatch = name; 
-        document.getElementById('p-batch').value = name; 
-        showView('entry');
-        renderUI(); 
-    }
+    const name = prompt("Batch Name:");
+    if (name) { activeBatch = name; document.getElementById('p-batch').value = name; renderUI(); }
 };
 
 // --- PRODUCT LOGIC ---
@@ -101,18 +81,11 @@ window.saveProduct = async function() {
     const payload = {
         batch_name: document.getElementById('p-batch').value,
         name: document.getElementById('p-name').value,
-        dozens: doz, price_naira: nair,
-        cost_cfa: parseFloat(document.getElementById('p-cfa').value) || 0,
-        sell_price_cfa: sellC,
-        total_naira: doz * nair, total_expected_cfa: doz * sellC
+        dozens: doz, price_naira: nair, cost_cfa: parseFloat(document.getElementById('p-cfa').value) || 0,
+        sell_price_cfa: sellC, total_naira: doz * nair, total_expected_cfa: doz * sellC
     };
     let res = editingProdId ? await _db.from('products').update(payload).eq('id', editingProdId) : await _db.from('products').insert([payload]);
-    
-    if (!res.error) { 
-        clearProductForm(); 
-        await loadData(); 
-        document.getElementById('p-name').focus(); // Cursor back to name
-    }
+    if (!res.error) { clearProductForm(); await loadData(); document.getElementById('p-name').focus(); }
 };
 
 window.editProduct = async (id) => {
@@ -133,10 +106,10 @@ window.editProduct = async (id) => {
 
 window.deleteProduct = async function(id) {
     if (!await checkAuth()) return;
-    if (confirm("Permanently delete this product?")) { await _db.from('products').delete().eq('id', id); loadData(); }
+    if (confirm("Delete product?")) { await _db.from('products').delete().eq('id', id); loadData(); }
 };
 
-// --- SALES LOGIC ---
+// --- SALES & ADDING ITEMS ---
 window.addToQueue = () => {
     const prodInput = document.getElementById('sale-prod');
     const qtyInput = document.getElementById('sale-qty');
@@ -144,23 +117,21 @@ window.addToQueue = () => {
     if (p && parseFloat(qtyInput.value) > 0) {
         queue.push({ id: p.id, name: p.name, qty: parseFloat(qtyInput.value), price: p.sell_price_cfa });
         document.getElementById('sale-queue').innerHTML = queue.map(i => `<div>• ${i.qty}x ${i.name}</div>`).join('');
-        prodInput.value = ''; qtyInput.value = '';
-        prodInput.focus(); // Cursor back to select item
+        prodInput.value = ''; qtyInput.value = ''; prodInput.focus();
     }
 };
 
 window.saveCustomer = async function() {
     const n = document.getElementById('c-name').value;
+    const ph = document.getElementById('c-phone').value;
     const pd = parseFloat(document.getElementById('c-paid').value) || 0;
     const total = queue.reduce((s, i) => s + (i.qty * i.price), 0);
-    const now = new Date().toLocaleString('en-GB');
-
-    if (!n || queue.length === 0) return alert("Add products and customer name!");
+    if (!n || queue.length === 0) return alert("Select product and enter name!");
 
     const { error } = await _db.from('customers').insert([{
-        name: n, items_json: queue, total_amount: total,
+        name: n, phone: ph, items_json: queue, total_amount: total,
         amount_paid: pd, balance: total - pd, updated_at: new Date().toISOString(), 
-        batch_tag: activeBatch, last_payment_date: now
+        batch_tag: activeBatch, last_payment_date: new Date().toLocaleString('en-GB')
     }]);
 
     if (!error) {
@@ -169,22 +140,47 @@ window.saveCustomer = async function() {
             await _db.from('products').update({ sold_units: (inv.sold_units || 0) + item.qty }).eq('id', inv.id);
         }
         queue = [];
-        ['c-name', 'c-paid'].forEach(id => document.getElementById(id).value = '');
+        ['c-name', 'c-phone', 'c-paid'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('sale-queue').innerHTML = 'Basket empty...';
         await loadData();
-        document.getElementById('sale-prod').focus(); // Cursor back for next sale
+        document.getElementById('sale-prod').focus();
+    }
+};
+
+// NEW LOGIC: Add more items to an existing customer
+window.addToExistingCustomer = async function(id) {
+    if (queue.length === 0) return alert("Basket is empty! Add products to basket first.");
+    const c = customers.find(x => x.id === id);
+    const addedTotal = queue.reduce((s, i) => s + (i.qty * i.price), 0);
+    const newTotal = c.total_amount + addedTotal;
+
+    if (confirm(`Add these items to ${c.name}'s account?`)) {
+        await _db.from('customers').update({
+            items_json: [...c.items_json, ...queue],
+            total_amount: newTotal,
+            balance: newTotal - c.amount_paid,
+            updated_at: new Date().toISOString()
+        }).eq('id', id);
+
+        for (let item of queue) {
+            const inv = inventory.find(x => x.id === item.id);
+            await _db.from('products').update({ sold_units: (inv.sold_units || 0) + item.qty }).eq('id', inv.id);
+        }
+        queue = [];
+        document.getElementById('sale-queue').innerHTML = 'Basket empty...';
+        await loadData();
+        alert("Items added successfully!");
     }
 };
 
 window.editCustomerPayment = async function(id) {
     if (!await checkAuth()) return;
     const c = customers.find(x => x.id === id);
-    const val = prompt(`Update Total Paid for ${c.name}:`, c.amount_paid);
+    const val = prompt(`Total paid by ${c.name}:`, c.amount_paid);
     if (val !== null) {
-        const now = new Date().toLocaleString('en-GB');
         await _db.from('customers').update({ 
             amount_paid: parseFloat(val) || 0, balance: c.total_amount - (parseFloat(val) || 0), 
-            last_payment_date: now 
+            last_payment_date: new Date().toLocaleString('en-GB') 
         }).eq('id', id);
         loadData();
     }
@@ -192,7 +188,7 @@ window.editCustomerPayment = async function(id) {
 
 window.deleteCustomer = async function(id) {
     if (!await checkAuth()) return;
-    if (confirm("Delete this customer record?")) { await _db.from('customers').delete().eq('id', id); loadData(); }
+    if (confirm("Delete sale?")) { await _db.from('customers').delete().eq('id', id); loadData(); }
 };
 
 window.clearProductForm = () => {
@@ -216,23 +212,26 @@ function renderUI() {
             <td class="p-4"><strong>${p.name}</strong></td>
             <td class="p-4">${((p.dozens || 0) - (p.sold_units || 0)).toFixed(1)} Doz</td>
             <td class="p-4 text-right font-mono">${(p.sell_price_cfa || 0).toLocaleString()}</td>
-            <td class="p-4 text-center">
-                <button onclick="editProduct(${p.id})" class="text-blue-400 mr-2">Edit</button>
-                <button onclick="deleteProduct(${p.id})" class="text-red-700">X</button>
-            </td>
+            <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 mr-2">Edit</button><button onclick="deleteProduct(${p.id})" class="text-red-700">X</button></td>
         </tr>`).join('');
 
     document.getElementById('customer-table').innerHTML = fCust.map(c => `
         <tr class="border-b border-gray-800">
             <td class="p-4">
-                <strong>${c.name}</strong><br>
-                <span class="text-[8px] text-gray-500">Last Pay: ${c.last_payment_date || 'N/A'}</span>
+                <strong>${c.name}</strong> <span class="text-gray-500 text-[10px] ml-1">${c.phone || ''}</span><br>
+                <div class="item-tag mt-1">
+                    ${(c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(' | ')}
+                </div>
+                <div class="text-[8px] text-gray-600 mt-1 uppercase">Last Pay: ${c.last_payment_date || 'N/A'}</div>
             </td>
             <td class="p-4 text-right font-mono">${(c.total_amount || 0).toLocaleString()}</td>
             <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-400'} font-mono">${(c.balance || 0).toLocaleString()}</td>
-            <td class="p-4 text-center">
-                <button onclick="editCustomerPayment(${c.id})" class="bg-yellow-600 text-black px-2 py-1 rounded text-[9px] font-bold">PAY</button>
-                <button onclick="deleteCustomer(${c.id})" class="text-red-500 ml-2">DEL</button>
+            <td class="p-4">
+                <div class="flex gap-1 justify-center">
+                    <button onclick="addToExistingCustomer(${c.id})" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold">ADD</button>
+                    <button onclick="editCustomerPayment(${c.id})" class="bg-yellow-600 text-black px-2 py-1 rounded text-[9px] font-bold">PAY</button>
+                    <button onclick="deleteCustomer(${c.id})" class="text-red-500 ml-2">DEL</button>
+                </div>
             </td>
         </tr>`).join('');
 }
