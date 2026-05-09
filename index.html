@@ -7,60 +7,62 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #0a0a0a; color: #e5e7eb; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #0a0a0a; color: #e5e7eb; font-family: sans-serif; }
         .gold-text { color: #d4af37; }
         .gold-bg { background-color: #d4af37; }
         .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 12px; }
         input, select { background-color: #0d1117; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
         input:focus { border-color: #d4af37; }
         .active-batch-pill { background: linear-gradient(135deg, #d4af37 0%, #f9e29c 100%); color: #000; padding: 4px 12px; border-radius: 50px; font-weight: 800; font-size: 11px; }
-        .date-badge { background-color: #1f2937; color: #9ca3af; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; }
+        .nav-btn { background: #161b22; border: 1px solid #30363d; color: #8b949e; transition: 0.3s; }
+        .nav-btn.active { border-color: #d4af37; color: #d4af37; background: #1c2128; }
+        .hidden-view { display: none !important; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <header class="text-center mb-8">
-        <h1 class="text-4xl font-black gold-text tracking-tighter uppercase">DONCHIKE COSMETICSL</h1>
+    <header class="text-center mb-6">
+        <h1 class="text-3xl font-black gold-text tracking-tighter uppercase">AKUDON TERMINAL</h1>
+        
         <div class="max-w-4xl mx-auto mt-4 bg-gray-900 p-4 rounded-xl border border-gray-800">
             <div class="flex flex-wrap justify-center items-center gap-4 mb-4">
-                <span class="text-[10px] uppercase font-bold text-gray-500">Current View:</span>
                 <span id="current-batch-display" class="active-batch-pill">ALL RECORDS</span>
                 <select id="batch-filter" onchange="switchBatch()" class="w-48 text-xs"></select>
             </div>
-            <div class="flex flex-wrap justify-center gap-2">
-                <button onclick="startNewBatch()" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded font-bold uppercase">+ New Batch</button>
-                <button onclick="renameCurrentBatch()" class="bg-yellow-600 text-black text-[10px] px-4 py-2 rounded font-bold uppercase">Rename</button>
-                <button onclick="deleteCurrentBatch()" class="bg-red-900 text-white text-[10px] px-4 py-2 rounded font-bold uppercase">Delete Batch</button>
+            
+            <div class="flex justify-center gap-2 mt-2">
+                <button id="btn-entry" onclick="showView('entry')" class="nav-btn active px-6 py-2 rounded font-bold text-[10px] uppercase">New Entry</button>
+                <button id="btn-customers" onclick="showView('customers')" class="nav-btn px-6 py-2 rounded font-bold text-[10px] uppercase">Customers</button>
+                <button id="btn-inventory" onclick="showView('inventory')" class="nav-btn px-6 py-2 rounded font-bold text-[10px] uppercase">Inventory</button>
             </div>
         </div>
     </header>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-6xl mx-auto">
-        <div class="card p-4 text-center border-l-4 border-yellow-500">
-            <h3 class="text-[9px] uppercase text-gray-500">Total Stock (₦)</h3>
-            <p id="total-naira" class="text-xl font-bold gold-text">₦0</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 max-w-6xl mx-auto">
+        <div class="card p-3 text-center border-l-2 border-yellow-500">
+            <h3 class="text-[8px] uppercase text-gray-500">Stock Value ₦</h3>
+            <p id="total-naira" class="text-lg font-bold gold-text">0</p>
         </div>
-        <div class="card p-4 text-center border-l-4 border-yellow-600">
-            <h3 class="text-[9px] uppercase text-gray-500">Cost (CFA)</h3>
-            <p id="total-cfa" class="text-xl font-bold">0</p>
+        <div class="card p-3 text-center border-l-2 border-green-600">
+            <h3 class="text-[8px] uppercase text-gray-500">Expected CFA</h3>
+            <p id="expected-cfa" class="text-lg font-bold text-green-400">0</p>
         </div>
-        <div class="card p-4 text-center border-l-4 border-green-600">
-            <h3 class="text-[9px] uppercase text-gray-500">Revenue (CFA)</h3>
-            <p id="expected-cfa" class="text-xl font-bold text-green-400">0</p>
+        <div class="card p-3 text-center border-l-2 border-red-600">
+            <h3 class="text-[8px] uppercase text-gray-500">Total Debt</h3>
+            <p id="total-debt" class="text-lg font-bold text-red-500">0</p>
         </div>
-        <div class="card p-4 text-center border-l-4 border-red-600">
-            <h3 class="text-[9px] uppercase text-gray-500">Total Debt</h3>
-            <p id="total-debt" class="text-xl font-bold text-red-500">0</p>
+        <div class="card p-3 text-center border-l-2 border-blue-500 flex items-center justify-center">
+            <button onclick="startNewBatch()" class="text-[10px] font-bold uppercase text-blue-400">+ New Batch</button>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto">
-        <div class="lg:col-span-4 space-y-6">
+    <main class="max-w-7xl mx-auto">
+        <div id="view-entry" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="card p-6">
-                <h2 id="p-title" class="gold-text font-black uppercase text-sm mb-4">📦 Product Entry</h2>
+                <h2 id="p-title" class="gold-text font-black uppercase text-xs mb-4">📦 Product Setup</h2>
                 <div class="space-y-3">
                     <input type="text" id="p-batch" placeholder="Batch Name" readonly class="opacity-50">
-                    <input type="text" id="p-name" placeholder="Product Name">
+                    <input type="text" id="p-name" placeholder="Item Name">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="number" id="p-dozens" placeholder="Qty (Doz)">
                         <input type="number" id="p-naira" placeholder="Price ₦">
@@ -69,56 +71,67 @@
                         <input type="number" id="p-cfa" placeholder="Cost CFA">
                         <input type="number" id="p-sell" placeholder="Sell CFA">
                     </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Save Product</button>
-                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-gray-800 text-[10px] mt-2 py-1 rounded">Cancel Edit</button>
+                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Save to Stock</button>
+                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-red-900 text-white text-[10px] mt-2 py-1 rounded">Cancel Edit</button>
                 </div>
             </div>
 
             <div class="card p-6 border-t-2 border-green-500">
-                <h2 class="text-green-500 font-black uppercase text-sm mb-4">💸 Record Sale</h2>
+                <h2 class="text-green-500 font-black uppercase text-xs mb-4">💸 New Sale</h2>
                 <div class="space-y-3">
                     <div class="flex gap-1">
                         <input list="p-list" id="sale-prod" placeholder="Select Product">
                         <datalist id="p-list"></datalist>
                         <input type="number" id="sale-qty" placeholder="Qty" class="w-20">
                     </div>
-                    <button onclick="addToQueue()" class="w-full bg-gray-800 text-xs py-2 rounded font-bold uppercase">Add to Basket</button>
-                    <div id="sale-queue" class="bg-black p-2 rounded text-[10px] text-gray-500 italic">Basket empty...</div>
+                    <button onclick="addToQueue()" class="w-full bg-gray-800 text-[10px] py-2 rounded font-bold uppercase">Add to Basket</button>
+                    <div id="sale-queue" class="bg-black p-2 rounded text-[10px] text-gray-500 italic min-h-[40px]">Basket empty...</div>
                     <hr class="border-gray-800">
                     <input type="text" id="c-name" placeholder="Customer Name">
-                    <input type="text" id="c-phone" placeholder="Customer Phone">
-                    <input type="number" id="c-paid" placeholder="Initial Payment (CFA)">
-                    <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded uppercase text-xs">Complete Sale</button>
+                    <input type="number" id="c-paid" placeholder="Amount Paid (CFA)">
+                    <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded uppercase text-xs">Finalize Sale</button>
                 </div>
             </div>
         </div>
 
-        <div class="lg:col-span-8 space-y-6">
-            <div class="card overflow-hidden">
-                <div class="p-3 bg-gray-900 border-b border-gray-800 flex justify-between">
-                    <h2 class="text-[10px] font-black gold-text uppercase">Customer Accounts Ledger</h2>
-                    <span class="text-[8px] text-red-500 font-bold tracking-widest uppercase">Security Locked 🔒</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-black text-gray-500 uppercase">
-                            <tr><th class="p-4">Customer Info</th><th class="p-4 text-right">Total Bill</th><th class="p-4 text-right">Balance</th><th class="p-4 text-center">Actions</th></tr>
-                        </thead>
-                        <tbody id="customer-table" class="divide-y divide-gray-800"></tbody>
-                    </table>
-                </div>
+        <div id="view-customers" class="hidden-view card overflow-hidden">
+            <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                <h2 class="font-black text-xs gold-text uppercase">Batch Ledger: Customers</h2>
+                <button onclick="showView('entry')" class="text-[9px] text-gray-500">← Back</button>
             </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-black text-gray-500 uppercase">
+                        <tr><th class="p-4">Customer</th><th class="p-4 text-right">Total Bill</th><th class="p-4 text-right">Balance</th><th class="p-4 text-center">Manage</th></tr>
+                    </thead>
+                    <tbody id="customer-table" class="divide-y divide-gray-800"></tbody>
+                </table>
+            </div>
+        </div>
 
-            <div class="card overflow-hidden">
-                <div class="p-3 bg-gray-900 border-b border-gray-800"><h2 class="text-[10px] font-black gold-text uppercase">Stock Inventory</h2></div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-black text-gray-500 uppercase">
-                            <tr><th class="p-4">Item Name</th><th class="p-4">Remaining</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Actions</th></tr>
-                        </thead>
-                        <tbody id="inventory-table" class="divide-y divide-gray-800"></tbody>
-                    </table>
-                </div>
+        <div id="view-inventory" class="hidden-view card overflow-hidden">
+            <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                <h2 class="font-black text-xs gold-text uppercase">Batch Ledger: Products</h2>
+                <button onclick="showView('entry')" class="text-[9px] text-gray-500">← Back</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-black text-gray-500 uppercase">
+                        <tr><th class="p-4">Item</th><th class="p-4">Stock Left</th><th class="p-4 text-right">Unit Price</th><th class="p-4 text-center">Manage</th></tr>
+                    </thead>
+                    <tbody id="inventory-table" class="divide-y divide-gray-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="password-modal" class="hidden-view fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 p-4">
+        <div class="card p-6 w-full max-w-xs text-center border-yellow-500 border-2 shadow-2xl">
+            <h3 class="gold-text font-black uppercase text-sm mb-4 tracking-widest">Manager Security</h3>
+            <input type="password" id="modal-pass-input" placeholder="••••" class="text-center text-3xl tracking-[0.5em] mb-4">
+            <div class="flex gap-2">
+                <button onclick="cancelAuth()" class="w-1/2 bg-gray-800 py-2 rounded text-[10px] font-bold uppercase">Cancel</button>
+                <button onclick="confirmAuth()" class="w-1/2 gold-bg text-black py-2 rounded text-[10px] font-bold uppercase">Unlock</button>
             </div>
         </div>
     </div>
