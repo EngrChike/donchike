@@ -18,6 +18,10 @@
         .nav-btn.active { border-color: #d4af37; color: #d4af37; background: #1c2128; }
         .hidden-view { display: none !important; }
         .item-tag { color: #d4af37; font-size: 9px; font-weight: bold; text-transform: uppercase; }
+        
+        /* PRIVACY SHIELD: Blurs the text until unlocked */
+        .privacy-shield { filter: blur(5px); background: #222; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .privacy-shield:hover { filter: blur(3px); }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -58,6 +62,7 @@
     </div>
 
     <main class="max-w-7xl mx-auto">
+        <!-- VIEW: ENTRY -->
         <div id="view-entry" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="card p-6">
                 <h2 id="p-title" class="gold-text font-black uppercase text-xs mb-4">📦 Product Setup</h2>
@@ -80,7 +85,6 @@
             <div class="card p-6 border-t-2 border-green-500">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-green-500 font-black uppercase text-xs">💸 New Sale</h2>
-                    <span class="text-[8px] text-gray-500">Add items to basket first</span>
                 </div>
                 <div class="space-y-3">
                     <div class="flex gap-1">
@@ -99,16 +103,17 @@
             </div>
         </div>
 
+        <!-- VIEW: CUSTOMERS -->
         <div id="view-customers" class="hidden-view card overflow-hidden">
             <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
-                <h2 class="font-black text-xs gold-text uppercase">Customer Accounts Ledger</h2>
-                <button onclick="showView('entry')" class="text-[9px] text-gray-500">← Back</button>
+                <h2 class="font-black text-xs gold-text uppercase">Accounts Ledger</h2>
+                <span class="text-[8px] text-gray-500 italic">Financial data is hidden for privacy.</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead class="bg-black text-gray-500 uppercase">
                         <tr>
-                            <th class="p-4">Customer Info & Items</th>
+                            <th class="p-4">Customer & Items</th>
                             <th class="p-4 text-right">Total Bill</th>
                             <th class="p-4 text-right">Balance</th>
                             <th class="p-4 text-center">Actions</th>
@@ -119,10 +124,10 @@
             </div>
         </div>
 
+        <!-- VIEW: INVENTORY -->
         <div id="view-inventory" class="hidden-view card overflow-hidden">
             <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
-                <h2 class="font-black text-xs gold-text uppercase">Stock Inventory</h2>
-                <button onclick="showView('entry')" class="text-[9px] text-gray-500">← Back</button>
+                <h2 class="font-black text-xs gold-text uppercase">Inventory</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -135,9 +140,10 @@
         </div>
     </main>
 
+    <!-- SECURE PASSWORD MODAL -->
     <div id="password-modal" class="hidden-view fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 p-4">
-        <div class="card p-6 w-full max-w-xs text-center border-yellow-500 border-2 shadow-2xl">
-            <h3 class="gold-text font-black uppercase text-sm mb-4 tracking-widest">Manager Security</h3>
+        <div class="card p-6 w-full max-w-xs text-center border-yellow-500 border-2">
+            <h3 id="modal-title" class="gold-text font-black uppercase text-sm mb-4 tracking-widest">Manager Security</h3>
             <input type="password" id="modal-pass-input" placeholder="••••" class="text-center text-3xl tracking-[0.5em] mb-4">
             <div class="flex gap-2">
                 <button onclick="cancelAuth()" class="w-1/2 bg-gray-800 py-2 rounded text-[10px] font-bold uppercase">Cancel</button>
