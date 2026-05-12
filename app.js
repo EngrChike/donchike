@@ -6,6 +6,7 @@ const MASTER_KEY = "123";
 let _db, inventory = [], customers = [], queue = [], editingProdId = null;
 let activeBatch = 'ALL';
 let authResolve = null;
+let unlockedRows = new Set(); // Stores IDs of customers currently unhidden
 
 document.addEventListener('DOMContentLoaded', () => {
     _db = supabase.createClient(supabaseUrl, supabaseKey);
@@ -14,9 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- SECURITY ---
-async function checkAuth() {
+async function checkAuth(customTitle = "Manager Security") {
     return new Promise((resolve) => {
         authResolve = resolve;
+        document.getElementById('modal-title').innerText = customTitle;
         document.getElementById('password-modal').classList.remove('hidden-view');
         const pinInput = document.getElementById('modal-pass-input');
         pinInput.value = '';
@@ -104,11 +106,6 @@ window.editProduct = async (id) => {
     document.getElementById('p-name').focus();
 };
 
-window.deleteProduct = async function(id) {
-    if (!await checkAuth()) return;
-    if (confirm("Delete product?")) { await _db.from('products').delete().eq('id', id); loadData(); }
-};
-
 // --- SALES & ADDING ITEMS ---
 window.addToQueue = () => {
     const prodInput = document.getElementById('sale-prod');
@@ -147,43 +144,62 @@ window.saveCustomer = async function() {
     }
 };
 
-// NEW LOGIC: Add more items to an existing customer
 window.addToExistingCustomer = async function(id) {
-    if (queue.length === 0) return alert("Basket is empty! Add products to basket first.");
+    if (queue.length === 0) return alert("Basket is empty!");
+    if (!await checkAuth("Confirm Add Items")) return;
+
     const c = customers.find(x => x.id === id);
     const addedTotal = queue.reduce((s, i) => s + (i.qty * i.price), 0);
     const newTotal = c.total_amount + addedTotal;
 
-    if (confirm(`Add these items to ${c.name}'s account?`)) {
-        await _db.from('customers').update({
-            items_json: [...c.items_json, ...queue],
-            total_amount: newTotal,
-            balance: newTotal - c.amount_paid,
-            updated_at: new Date().toISOString()
-        }).eq('id', id);
+    await _db.from('customers').update({
+        items_json: [...c.items_json, ...queue],
+        total_amount: newTotal,
+        balance: newTotal - c.amount_paid,
+        updated_at: new Date().toISOString()
+    }).eq('id', id);
 
-        for (let item of queue) {
-            const inv = inventory.find(x => x.id === item.id);
-            await _db.from('products').update({ sold_units: (inv.sold_units || 0) + item.qty }).eq('id', inv.id);
-        }
-        queue = [];
-        document.getElementById('sale-queue').innerHTML = 'Basket empty...';
-        await loadData();
-        alert("Items added successfully!");
+    for (let item of queue) {
+        const inv = inventory.find(x => x.id === item.id);
+        await _db.from('products').update({ sold_units: (inv.sold_units || 0) + item.qty }).eq('id', inv.id);
+    }
+    queue = [];
+    document.getElementById('sale-queue').innerHTML = 'Basket empty...';
+    await loadData();
+};
+
+// AUTOMATIC MATH FOR PAYMENTS
+window.makeNewPayment = async function(id) {
+    if (!await checkAuth("Secure Payment Entry")) return;
+    
+    const c = customers.find(x => x.id === id);
+    const paymentAmount = prompt(`Current Balance: ${c.balance.toLocaleString()} CFA\nEnter Amount Paying Now:`);
+    
+    if (paymentAmount && !isNaN(paymentAmount)) {
+        const pay = parseFloat(paymentAmount);
+        const newTotalPaid = c.amount_paid + pay;
+        const newBalance = c.total_amount - newTotalPaid;
+
+        await _db.from('customers').update({ 
+            amount_paid: newTotalPaid, 
+            balance: newBalance, 
+            last_payment_date: new Date().toLocaleString('en-GB') 
+        }).eq('id', id);
+        
+        loadData();
     }
 };
 
-window.editCustomerPayment = async function(id) {
-    if (!await checkAuth()) return;
-    const c = customers.find(x => x.id === id);
-    const val = prompt(`Total paid by ${c.name}:`, c.amount_paid);
-    if (val !== null) {
-        await _db.from('customers').update({ 
-            amount_paid: parseFloat(val) || 0, balance: c.total_amount - (parseFloat(val) || 0), 
-            last_payment_date: new Date().toLocaleString('en-GB') 
-        }).eq('id', id);
-        loadData();
+// PRIVACY UNLOCK LOGIC
+window.unlockPrivacy = async function(id) {
+    if (unlockedRows.has(id)) {
+        unlockedRows.delete(id);
+    } else {
+        if (await checkAuth("Unlock Privacy Shield")) {
+            unlockedRows.add(id);
+        }
     }
+    renderUI();
 };
 
 window.deleteCustomer = async function(id) {
@@ -212,26 +228,30 @@ function renderUI() {
             <td class="p-4"><strong>${p.name}</strong></td>
             <td class="p-4">${((p.dozens || 0) - (p.sold_units || 0)).toFixed(1)} Doz</td>
             <td class="p-4 text-right font-mono">${(p.sell_price_cfa || 0).toLocaleString()}</td>
-            <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 mr-2">Edit</button><button onclick="deleteProduct(${p.id})" class="text-red-700">X</button></td>
+            <td class="p-4 text-center"><button onclick="editProduct(${p.id})" class="text-blue-400 mr-2">Edit</button></td>
         </tr>`).join('');
 
-    document.getElementById('customer-table').innerHTML = fCust.map(c => `
+    document.getElementById('customer-table').innerHTML = fCust.map(c => {
+        const isUnlocked = unlockedRows.has(c.id);
+        return `
         <tr class="border-b border-gray-800">
             <td class="p-4">
                 <strong>${c.name}</strong> <span class="text-gray-500 text-[10px] ml-1">${c.phone || ''}</span><br>
-                <div class="item-tag mt-1">
-                    ${(c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(' | ')}
-                </div>
-                <div class="text-[8px] text-gray-600 mt-1 uppercase">Last Pay: ${c.last_payment_date || 'N/A'}</div>
+                <div class="item-tag mt-1">${(c.items_json || []).map(i => `${i.qty}x ${i.name}`).join(' | ')}</div>
+                <div class="text-[8px] text-gray-600 mt-1 uppercase">Updated: ${c.last_payment_date || 'N/A'}</div>
             </td>
-            <td class="p-4 text-right font-mono">${(c.total_amount || 0).toLocaleString()}</td>
-            <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-400'} font-mono">${(c.balance || 0).toLocaleString()}</td>
+            <td class="p-4 text-right font-mono ${isUnlocked ? '' : 'privacy-shield'}" onclick="unlockPrivacy(${c.id})">
+                ${isUnlocked ? (c.total_amount || 0).toLocaleString() : 'HIDDEN'}
+            </td>
+            <td class="p-4 text-right font-bold ${c.balance > 0 ? 'text-red-500' : 'text-green-400'} font-mono ${isUnlocked ? '' : 'privacy-shield'}" onclick="unlockPrivacy(${c.id})">
+                ${isUnlocked ? (c.balance || 0).toLocaleString() : 'HIDDEN'}
+            </td>
             <td class="p-4">
                 <div class="flex gap-1 justify-center">
                     <button onclick="addToExistingCustomer(${c.id})" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold">ADD</button>
-                    <button onclick="editCustomerPayment(${c.id})" class="bg-yellow-600 text-black px-2 py-1 rounded text-[9px] font-bold">PAY</button>
+                    <button onclick="makeNewPayment(${c.id})" class="bg-yellow-600 text-black px-2 py-1 rounded text-[9px] font-bold">PAY</button>
                     <button onclick="deleteCustomer(${c.id})" class="text-red-500 ml-2">DEL</button>
                 </div>
             </td>
-        </tr>`).join('');
+        </tr>`}).join('');
 }
