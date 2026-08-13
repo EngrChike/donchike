@@ -18,129 +18,146 @@
         .nav-btn.active { border-color: #d4af37; color: #d4af37; background: #1c2128; }
         .hidden-view { display: none !important; }
         .item-tag { color: #d4af37; font-size: 9px; font-weight: bold; text-transform: uppercase; }
-        
-        /* PRIVACY SHIELD: Blurs the text until unlocked */
         .privacy-shield { filter: blur(5px); background: #222; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .privacy-shield:hover { filter: blur(3px); }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
 
-    <header class="text-center mb-6">
-        <h1 class="text-3xl font-black gold-text tracking-tighter uppercase">AKUDON TERMINAL</h1>
-        
-        <div class="max-w-4xl mx-auto mt-4 bg-gray-900 p-4 rounded-xl border border-gray-800">
-            <div class="flex flex-wrap justify-center items-center gap-4 mb-4">
-                <span id="current-batch-display" class="active-batch-pill">ALL RECORDS</span>
-                <select id="batch-filter" onchange="switchBatch()" class="w-48 text-xs"></select>
-            </div>
+    <!-- MASTER AUTHENTICATION SCREEN -->
+    <div id="auth-view" class="w-full max-w-sm mt-20">
+        <div class="card p-8 text-center border-yellow-500 border-t-4 shadow-2xl">
+            <h1 class="text-2xl font-black gold-text tracking-tighter uppercase mb-2">AKUDON</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Secure Cloud Terminal</p>
             
-            <div class="flex justify-center gap-2 mt-2">
-                <button id="btn-entry" onclick="showView('entry')" class="nav-btn active px-6 py-2 rounded font-bold text-[10px] uppercase">New Entry</button>
-                <button id="btn-customers" onclick="showView('customers')" class="nav-btn px-6 py-2 rounded font-bold text-[10px] uppercase">Customers</button>
-                <button id="btn-inventory" onclick="showView('inventory')" class="nav-btn px-6 py-2 rounded font-bold text-[10px] uppercase">Inventory</button>
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Admin Email" class="text-center">
+                <input type="password" id="login-password" placeholder="Master Password" class="text-center">
+                <button onclick="handleLogin()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Authorize Connection</button>
             </div>
-        </div>
-    </header>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 max-w-6xl mx-auto">
-        <div class="card p-3 text-center border-l-2 border-yellow-500">
-            <h3 class="text-[8px] uppercase text-gray-500">Stock Value ₦</h3>
-            <p id="total-naira" class="text-lg font-bold gold-text">0</p>
-        </div>
-        <div class="card p-3 text-center border-l-2 border-green-600">
-            <h3 class="text-[8px] uppercase text-gray-500">Expected CFA</h3>
-            <p id="expected-cfa" class="text-lg font-bold text-green-400">0</p>
-        </div>
-        <div class="card p-3 text-center border-l-2 border-red-600">
-            <h3 class="text-[8px] uppercase text-gray-500">Total Debt</h3>
-            <p id="total-debt" class="text-lg font-bold text-red-500">0</p>
-        </div>
-        <div class="card p-3 text-center border-l-2 border-blue-500 flex items-center justify-center">
-            <button onclick="startNewBatch()" class="text-[10px] font-bold uppercase text-blue-400">+ New Batch</button>
+            <p id="auth-error" class="text-red-500 text-xs mt-4 hidden-view"></p>
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto">
-        <!-- VIEW: ENTRY -->
-        <div id="view-entry" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card p-6">
-                <h2 id="p-title" class="gold-text font-black uppercase text-xs mb-4">📦 Product Setup</h2>
-                <div class="space-y-3">
-                    <input type="text" id="p-batch" placeholder="Batch Name" readonly class="opacity-50">
-                    <input type="text" id="p-name" placeholder="Item Name">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="p-dozens" placeholder="Qty (Doz)">
-                        <input type="number" id="p-naira" placeholder="Price ₦">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="p-cfa" placeholder="Cost CFA">
-                        <input type="number" id="p-sell" placeholder="Sell CFA">
-                    </div>
-                    <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Save to Stock</button>
-                    <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-red-900 text-white text-[10px] mt-2 py-1 rounded">Cancel Edit</button>
+    <!-- MAIN APP VIEW (Hidden until logged in) -->
+    <div id="app-view" class="hidden-view w-full w-full">
+        <header class="text-center mb-6 relative">
+            <button onclick="handleLogout()" class="absolute top-0 right-0 text-[10px] text-red-500 border border-red-900 px-3 py-1 rounded">LOGOUT DB</button>
+            <h1 class="text-3xl font-black gold-text tracking-tighter uppercase">AKUDON TERMINAL</h1>
+            
+            <div class="max-w-4xl mx-auto mt-4 bg-gray-900 p-4 rounded-xl border border-gray-800">
+                <div class="flex flex-wrap justify-center items-center gap-4 mb-4">
+                    <span id="current-batch-display" class="active-batch-pill">ALL RECORDS</span>
+                    <select id="batch-filter" onchange="switchBatch()" class="w-48 text-xs"></select>
+                </div>
+                
+                <div class="flex justify-center gap-2 mt-2">
+                    <button id="btn-entry" onclick="showView('entry')" class="nav-btn active px-6 py-2 rounded font-bold text-[10px] uppercase">New Entry</button>
+                    <button id="btn-customers" onclick="showView('customers')" class="nav-btn px-6 py-2 rounded font-bold text-[10px] uppercase">Customers</button>
+                    <button id="btn-inventory" onclick="showView('inventory')" class="nav-btn px-6 py-2 rounded font-bold text-[10px] uppercase">Inventory</button>
                 </div>
             </div>
+        </header>
 
-            <div class="card p-6 border-t-2 border-green-500">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-green-500 font-black uppercase text-xs">💸 New Sale</h2>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex gap-1">
-                        <input list="p-list" id="sale-prod" placeholder="Select Product">
-                        <datalist id="p-list"></datalist>
-                        <input type="number" id="sale-qty" placeholder="Qty" class="w-20">
-                    </div>
-                    <button onclick="addToQueue()" class="w-full bg-gray-800 text-[10px] py-2 rounded font-bold uppercase">Add to Basket</button>
-                    <div id="sale-queue" class="bg-black p-2 rounded text-[10px] text-gray-500 italic min-h-[40px] border border-gray-800">Basket empty...</div>
-                    <hr class="border-gray-800">
-                    <input type="text" id="c-name" placeholder="Customer Name">
-                    <input type="text" id="c-phone" placeholder="Phone Number">
-                    <input type="number" id="c-paid" placeholder="Initial Payment (CFA)">
-                    <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded uppercase text-xs">Complete Sale</button>
-                </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 max-w-6xl mx-auto">
+            <div class="card p-3 text-center border-l-2 border-yellow-500">
+                <h3 class="text-[8px] uppercase text-gray-500">Stock Value ₦</h3>
+                <p id="total-naira" class="text-lg font-bold gold-text">0</p>
+            </div>
+            <div class="card p-3 text-center border-l-2 border-green-600">
+                <h3 class="text-[8px] uppercase text-gray-500">Expected CFA</h3>
+                <p id="expected-cfa" class="text-lg font-bold text-green-400">0</p>
+            </div>
+            <div class="card p-3 text-center border-l-2 border-red-600">
+                <h3 class="text-[8px] uppercase text-gray-500">Total Debt</h3>
+                <p id="total-debt" class="text-lg font-bold text-red-500">0</p>
+            </div>
+            <div class="card p-3 text-center border-l-2 border-blue-500 flex items-center justify-center">
+                <button onclick="startNewBatch()" class="text-[10px] font-bold uppercase text-blue-400">+ New Batch</button>
             </div>
         </div>
 
-        <!-- VIEW: CUSTOMERS -->
-        <div id="view-customers" class="hidden-view card overflow-hidden">
-            <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
-                <h2 class="font-black text-xs gold-text uppercase">Accounts Ledger</h2>
-                <span class="text-[8px] text-gray-500 italic">Financial data is hidden for privacy.</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-black text-gray-500 uppercase">
-                        <tr>
-                            <th class="p-4">Customer & Items</th>
-                            <th class="p-4 text-right">Total Bill</th>
-                            <th class="p-4 text-right">Balance</th>
-                            <th class="p-4 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customer-table" class="divide-y divide-gray-800"></tbody>
-                </table>
-            </div>
-        </div>
+        <main class="max-w-7xl mx-auto">
+            <!-- VIEW: ENTRY -->
+            <div id="view-entry" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card p-6">
+                    <h2 id="p-title" class="gold-text font-black uppercase text-xs mb-4">📦 Product Setup</h2>
+                    <div class="space-y-3">
+                        <input type="text" id="p-batch" placeholder="Batch Name" readonly class="opacity-50">
+                        <input type="text" id="p-name" placeholder="Item Name">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="p-dozens" placeholder="Qty (Doz)">
+                            <input type="number" id="p-naira" placeholder="Price ₦">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="p-cfa" placeholder="Cost CFA">
+                            <input type="number" id="p-sell" placeholder="Sell CFA">
+                        </div>
+                        <button onclick="saveProduct()" class="w-full gold-bg text-black font-black py-3 rounded uppercase text-xs">Save to Stock</button>
+                        <button id="p-cancel" onclick="clearProductForm()" class="hidden w-full bg-red-900 text-white text-[10px] mt-2 py-1 rounded">Cancel Edit</button>
+                    </div>
+                </div>
 
-        <!-- VIEW: INVENTORY -->
-        <div id="view-inventory" class="hidden-view card overflow-hidden">
-            <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
-                <h2 class="font-black text-xs gold-text uppercase">Inventory</h2>
+                <div class="card p-6 border-t-2 border-green-500">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-green-500 font-black uppercase text-xs">💸 New Sale</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex gap-1">
+                            <input list="p-list" id="sale-prod" placeholder="Select Product">
+                            <datalist id="p-list"></datalist>
+                            <input type="number" id="sale-qty" placeholder="Qty" class="w-20">
+                        </div>
+                        <button onclick="addToQueue()" class="w-full bg-gray-800 text-[10px] py-2 rounded font-bold uppercase">Add to Basket</button>
+                        <div id="sale-queue" class="bg-black p-2 rounded text-[10px] text-gray-500 italic min-h-[40px] border border-gray-800">Basket empty...</div>
+                        <hr class="border-gray-800">
+                        <input type="text" id="c-name" placeholder="Customer Name">
+                        <input type="text" id="c-phone" placeholder="Phone Number">
+                        <input type="number" id="c-paid" placeholder="Initial Payment (CFA)">
+                        <button onclick="saveCustomer()" class="w-full border border-green-500 text-green-500 font-bold py-3 rounded uppercase text-xs">Complete Sale</button>
+                    </div>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-black text-gray-500 uppercase">
-                        <tr><th class="p-4">Item</th><th class="p-4">Stock Left</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Manage</th></tr>
-                    </thead>
-                    <tbody id="inventory-table" class="divide-y divide-gray-800"></tbody>
-                </table>
-            </div>
-        </div>
-    </main>
 
-    <!-- SECURE PASSWORD MODAL -->
+            <!-- VIEW: CUSTOMERS -->
+            <div id="view-customers" class="hidden-view card overflow-hidden">
+                <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="font-black text-xs gold-text uppercase">Accounts Ledger</h2>
+                    <span class="text-[8px] text-gray-500 italic">Financial data is hidden for privacy.</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-black text-gray-500 uppercase">
+                            <tr>
+                                <th class="p-4">Customer & Items</th>
+                                <th class="p-4 text-right">Total Bill</th>
+                                <th class="p-4 text-right">Balance</th>
+                                <th class="p-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-table" class="divide-y divide-gray-800"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: INVENTORY -->
+            <div id="view-inventory" class="hidden-view card overflow-hidden">
+                <div class="p-4 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="font-black text-xs gold-text uppercase">Inventory</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-black text-gray-500 uppercase">
+                            <tr><th class="p-4">Item</th><th class="p-4">Stock Left</th><th class="p-4 text-right">Price</th><th class="p-4 text-center">Manage</th></tr>
+                        </thead>
+                        <tbody id="inventory-table" class="divide-y divide-gray-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- QUICK IN-APP PIN MODAL -->
     <div id="password-modal" class="hidden-view fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 p-4">
         <div class="card p-6 w-full max-w-xs text-center border-yellow-500 border-2">
             <h3 id="modal-title" class="gold-text font-black uppercase text-sm mb-4 tracking-widest">Manager Security</h3>
