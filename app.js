@@ -1,20 +1,55 @@
 const supabaseUrl = 'https://opszvifybrteqdfozbkr.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wc3p2aWZ5YnJ0ZXFkZm96YmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTQ5MzQsImV4cCI6MjA5MzU5MDkzNH0.cToJ5sLDcXGgDfJS2o_Ww-fwb69FaUgS4rriQfiGjeI';
 
-const MASTER_KEY = "123"; 
+const QUICK_PIN = "123"; 
 
 let _db, inventory = [], customers = [], queue = [], editingProdId = null;
 let activeBatch = 'ALL';
 let authResolve = null;
-let unlockedRows = new Set(); // Stores IDs of customers currently unhidden
+let unlockedRows = new Set(); 
 
 document.addEventListener('DOMContentLoaded', () => {
     _db = supabase.createClient(supabaseUrl, supabaseKey);
-    loadData();
+    
+    // Listen for Database Auth State Changes
+    _db.auth.onAuthStateChange((event, session) => {
+        if (session) {
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('app-view').classList.remove('hidden-view');
+            loadData(); // Only load data if fully authenticated
+        } else {
+            document.getElementById('auth-view').classList.remove('hidden-view');
+            document.getElementById('app-view').classList.add('hidden-view');
+        }
+    });
+
     document.getElementById('modal-pass-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') confirmAuth(); });
 });
 
-// --- SECURITY ---
+// --- MASTER DATABASE LOGIN ---
+window.handleLogin = async () => {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('auth-error');
+    
+    const { error } = await _db.auth.signInWithPassword({ email, password });
+    if (error) {
+        errorEl.innerText = error.message;
+        errorEl.classList.remove('hidden-view');
+    } else {
+        errorEl.classList.add('hidden-view');
+    }
+};
+
+window.handleLogout = async () => {
+    await _db.auth.signOut();
+    inventory = [];
+    customers = [];
+    unlockedRows.clear();
+};
+
+
+// --- QUICK IN-APP PIN SECURITY ---
 async function checkAuth(customTitle = "Manager Security") {
     return new Promise((resolve) => {
         authResolve = resolve;
@@ -29,8 +64,8 @@ async function checkAuth(customTitle = "Manager Security") {
 window.confirmAuth = () => {
     const input = document.getElementById('modal-pass-input').value;
     document.getElementById('password-modal').classList.add('hidden-view');
-    if (input === MASTER_KEY) { authResolve(true); } 
-    else { alert("❌ Incorrect Password"); authResolve(false); }
+    if (input === QUICK_PIN) { authResolve(true); } 
+    else { alert("❌ Incorrect PIN"); authResolve(false); }
 };
 
 window.cancelAuth = () => { document.getElementById('password-modal').classList.add('hidden-view'); authResolve(false); };
@@ -168,7 +203,6 @@ window.addToExistingCustomer = async function(id) {
     await loadData();
 };
 
-// AUTOMATIC MATH FOR PAYMENTS
 window.makeNewPayment = async function(id) {
     if (!await checkAuth("Secure Payment Entry")) return;
     
@@ -190,7 +224,6 @@ window.makeNewPayment = async function(id) {
     }
 };
 
-// PRIVACY UNLOCK LOGIC
 window.unlockPrivacy = async function(id) {
     if (unlockedRows.has(id)) {
         unlockedRows.delete(id);
